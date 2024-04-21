@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
 
 const ContentView: React.FC = () => {
   const [currentStep, setCurrentStep] = useState('');
@@ -19,11 +19,12 @@ const ContentView: React.FC = () => {
       addStep();
     }
     setEditing(false);
-  };
+  };  
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.headline}>Create your instruction step by step</Text>
+
       {editing && (
         <>
           <TextInput
@@ -32,12 +33,36 @@ const ContentView: React.FC = () => {
             onChangeText={setCurrentStep}
             style={styles.textInput}
           />
-          <View style={styles.buttonRow}>
-            <Button title="That's it!" onPress={finishSteps} color="gray" />
-            <Button title="+ Add Step" onPress={addStep} color="blue" />
-          </View>
+          <Button title="That's it!" onPress={finishSteps} color="gray" />
+          <Button title="+ Add Step" onPress={addStep} color="blue" />
         </>
       )}
+
+      <FlatList
+        data={steps}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item, index }) => (
+          <Text style={styles.listItem}>{`${index + 1}. ${item}`}</Text>
+        )}
+        style={styles.list}
+      />
+
+{viewingChanges && (
+  <View>
+    {steps.map((step, index) => (
+      <TextInput
+        key={index}
+        value={step}
+        onChangeText={text => {
+          const newSteps = [...steps];
+          newSteps[index] = text;
+          setSteps(newSteps);
+        }}
+        style={styles.textInput}
+      />
+    ))}
+  </View>
+)}
 
       {!editing && !viewingChanges && (
         <>
@@ -49,25 +74,13 @@ const ContentView: React.FC = () => {
 
       {viewingChanges && (
         <>
-          {steps.map((step, index) => (
-            <TextInput
-              key={index}
-              value={step}
-              onChangeText={(text) => {
-                const newSteps = [...steps];
-                newSteps[index] = text;
-                setSteps(newSteps);
-              }}
-              style={styles.textInput}
-            />
-          ))}
           <Button title="Save Changes" onPress={() => {
             setViewingChanges(false);
             setEditing(true);
           }} color="green" />
         </>
       )}
-    </ScrollView>
+    </View>
   );
 };
 
@@ -88,9 +101,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     padding: 10,
   },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  list: {
+    flexGrow: 0, // Ensures the list does not interfere with other layout components
+    marginBottom: 20,
+  },
+  listItem: {
+    fontSize: 16,
+    padding: 10,
   },
 });
 
