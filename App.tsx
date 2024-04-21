@@ -6,6 +6,7 @@ const ContentView: React.FC = () => {
   const [steps, setSteps] = useState<string[]>([]);
   const [editing, setEditing] = useState(true);
   const [viewingChanges, setViewingChanges] = useState(false);
+  const [startDictate, setStartDictate] = useState(false);
 
   const addStep = () => {
     if (currentStep.trim() !== '') {
@@ -23,7 +24,7 @@ const ContentView: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.headline}>Create your instruction step by step</Text>
+      <Text style={styles.headline}>Dictator</Text>
 
       {editing && (
         <>
@@ -39,7 +40,7 @@ const ContentView: React.FC = () => {
         </>
       )}
 
-      {!viewingChanges && (
+      {!viewingChanges && !startDictate && (
         <FlatList
           data={steps}
           keyExtractor={(item, index) => index.toString()}
@@ -50,11 +51,11 @@ const ContentView: React.FC = () => {
         />
       )}
 
-      {!editing && !viewingChanges && (
+      {!editing && !viewingChanges && !startDictate && (
         <>
           <Text style={styles.headline}>Here is your instruction. Would you like to make any changes?</Text>
           <Button title="Edit" onPress={() => setViewingChanges(true)} color="blue" />
-          <Button title="Accept version" onPress={() => console.log('Confirm Steps')} color="gray" />
+          <Button title="Accept version" onPress={() => setStartDictate(true)} color="gray" />
         </>
       )}
 
@@ -78,6 +79,13 @@ const ContentView: React.FC = () => {
             setEditing(true);
           }} color="green" />
         </ScrollView>
+      )}
+
+      {startDictate && (
+        <View style={styles.dictatePage}>
+          <Text style={styles.headline}>Ready to Dictate</Text>
+          <Button title="Start Dictate" onPress={() => console.log("Dictation started")} color="blue" />
+        </View>
       )}
     </View>
   );
@@ -110,6 +118,11 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
   },
+  dictatePage: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  }
 });
 
 export default ContentView;
