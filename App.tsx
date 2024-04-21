@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, ScrollView, StyleSheet } from 'react-native';
 
 const ContentView: React.FC = () => {
   const [currentStep, setCurrentStep] = useState('');
@@ -47,37 +47,32 @@ const ContentView: React.FC = () => {
         style={styles.list}
       />
 
-{viewingChanges && (
-  <View>
-    {steps.map((step, index) => (
-      <TextInput
-        key={index}
-        value={step}
-        onChangeText={text => {
-          const newSteps = [...steps];
-          newSteps[index] = text;
-          setSteps(newSteps);
-        }}
-        style={styles.textInput}
-      />
-    ))}
-  </View>
-)}
+      {viewingChanges && (
+        <ScrollView style={styles.scrollContainer}>
+          {steps.map((step, index) => (
+            <TextInput
+              key={index}
+              value={step}
+              onChangeText={text => {
+                const newSteps = [...steps];
+                newSteps[index] = text;
+                setSteps(newSteps);
+              }}
+              style={styles.textInput}
+            />
+          ))}
+          <Button title="Save Changes" onPress={() => {
+            setViewingChanges(false);
+            setEditing(true);
+          }} color="green" />
+        </ScrollView>
+      )}
 
       {!editing && !viewingChanges && (
         <>
           <Text style={styles.headline}>Here is your instruction. Would you like to make any changes?</Text>
           <Button title="Edit" onPress={() => setViewingChanges(true)} color="blue" />
           <Button title="Confirm" onPress={() => console.log('Confirm Steps')} color="gray" />
-        </>
-      )}
-
-      {viewingChanges && (
-        <>
-          <Button title="Save Changes" onPress={() => {
-            setViewingChanges(false);
-            setEditing(true);
-          }} color="green" />
         </>
       )}
     </View>
@@ -102,12 +97,15 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   list: {
-    flexGrow: 0, // Ensures the list does not interfere with other layout components
+    flexGrow: 0,
     marginBottom: 20,
   },
   listItem: {
     fontSize: 16,
     padding: 10,
+  },
+  scrollContainer: {
+    maxHeight: 400,
   },
 });
 
