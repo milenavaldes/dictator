@@ -27,6 +27,7 @@ const ContentView: React.FC = () => {
 
       {editing && (
         <>
+          <Text style={styles.headline}>You can add more steps here:</Text>
           <TextInput
             multiline
             value={currentStep}
@@ -38,17 +39,28 @@ const ContentView: React.FC = () => {
         </>
       )}
 
-      <FlatList
-        data={steps}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item, index }) => (
-          <Text style={styles.listItem}>{`${index + 1}. ${item}`}</Text>
-        )}
-        style={styles.list}
-      />
+      {!viewingChanges && (
+        <FlatList
+          data={steps}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item, index }) => (
+            <Text style={styles.listItem}>{`${index + 1}. ${item}`}</Text>
+          )}
+          style={styles.list}
+        />
+      )}
+
+      {!editing && !viewingChanges && (
+        <>
+          <Text style={styles.headline}>Here is your instruction. Would you like to make any changes?</Text>
+          <Button title="Edit" onPress={() => setViewingChanges(true)} color="blue" />
+          <Button title="Accept version" onPress={() => console.log('Confirm Steps')} color="gray" />
+        </>
+      )}
 
       {viewingChanges && (
         <ScrollView style={styles.scrollContainer}>
+          <Text style={styles.headline}>Edit your steps:</Text>
           {steps.map((step, index) => (
             <TextInput
               key={index}
@@ -66,14 +78,6 @@ const ContentView: React.FC = () => {
             setEditing(true);
           }} color="green" />
         </ScrollView>
-      )}
-
-      {!editing && !viewingChanges && (
-        <>
-          <Text style={styles.headline}>Here is your instruction. Would you like to make any changes?</Text>
-          <Button title="Edit" onPress={() => setViewingChanges(true)} color="blue" />
-          <Button title="Confirm" onPress={() => console.log('Confirm Steps')} color="gray" />
-        </>
       )}
     </View>
   );
@@ -105,7 +109,6 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   scrollContainer: {
-    maxHeight: 400,
   },
 });
 
