@@ -1,118 +1,97 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button, ScrollView, StyleSheet } from 'react-native';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+const ContentView: React.FC = () => {
+  const [currentStep, setCurrentStep] = useState('');
+  const [steps, setSteps] = useState<string[]>([]);
+  const [editing, setEditing] = useState(true);
+  const [viewingChanges, setViewingChanges] = useState(false);
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+  const addStep = () => {
+    if (currentStep.trim() !== '') {
+      setSteps([...steps, currentStep]);
+      setCurrentStep('');
+    }
+  };
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const finishSteps = () => {
+    if (currentStep.trim() !== '') {
+      addStep();
+    }
+    setEditing(false);
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step Hey ">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <ScrollView style={styles.container}>
+      <Text style={styles.headline}>Create your instruction step by step</Text>
+      {editing && (
+        <>
+          <TextInput
+            multiline
+            value={currentStep}
+            onChangeText={setCurrentStep}
+            style={styles.textInput}
+          />
+          <View style={styles.buttonRow}>
+            <Button title="That's it!" onPress={finishSteps} color="gray" />
+            <Button title="+ Add Step" onPress={addStep} color="blue" />
+          </View>
+        </>
+      )}
+
+      {!editing && !viewingChanges && (
+        <>
+          <Text style={styles.headline}>Here is your instruction. Would you like to make any changes?</Text>
+          <Button title="Edit" onPress={() => setViewingChanges(true)} color="blue" />
+          <Button title="Confirm" onPress={() => console.log('Confirm Steps')} color="gray" />
+        </>
+      )}
+
+      {viewingChanges && (
+        <>
+          {steps.map((step, index) => (
+            <TextInput
+              key={index}
+              value={step}
+              onChangeText={(text) => {
+                const newSteps = [...steps];
+                newSteps[index] = text;
+                setSteps(newSteps);
+              }}
+              style={styles.textInput}
+            />
+          ))}
+          <Button title="Save Changes" onPress={() => {
+            setViewingChanges(false);
+            setEditing(true);
+          }} color="green" />
+        </>
+      )}
+    </ScrollView>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    padding: 20,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
+  headline: {
     fontSize: 18,
-    fontWeight: '400',
+    fontWeight: 'bold',
+    marginBottom: 20,
   },
-  highlight: {
-    fontWeight: '700',
+  textInput: {
+    minHeight: 100,
+    borderWidth: 1,
+    borderColor: 'grey',
+    marginBottom: 20,
+    padding: 10,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 });
 
-export default App;
+export default ContentView;
