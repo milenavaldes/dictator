@@ -7,6 +7,9 @@ const ContentView: React.FC = () => {
   const [editing, setEditing] = useState(true);
   const [viewingChanges, setViewingChanges] = useState(false);
   const [startDictate, setStartDictate] = useState(false);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0); // Начальный индекс устанавливаем в 0
+  const [isDictating, setIsDictating] = useState(false);
+  
 
   const addStep = () => {
     if (currentStep.trim() !== '') {
@@ -21,6 +24,29 @@ const ContentView: React.FC = () => {
     }
     setEditing(false);
   };  
+
+  const startDictation = () => {
+    setStartDictate(true);
+    setCurrentStepIndex(0); // Начинаем диктовку с первого шага
+  };
+  
+  const handleRepeat = () => {
+    // Повтор текущего шага, никаких изменений в индексе шага не нужно
+  };
+  
+  const handleNext = () => {
+    if (currentStepIndex < steps.length - 1) {
+      setCurrentStepIndex(currentStepIndex + 1); // Переход к следующему шагу
+    } else {
+      // Если следующего шага нет, возможно, стоит сообщить пользователю или закончить диктовку
+      console.log("No more steps"); // или можно вызвать handleAbort
+    }
+  };
+  
+  const handleAbort = () => {
+    setStartDictate(false); // Выход из режима диктовки
+    setCurrentStepIndex(0); // Сброс индекса текущего шага
+  };
 
   return (
     <View style={styles.container}>
@@ -59,6 +85,15 @@ const ContentView: React.FC = () => {
         </>
       )}
 
+      {startDictate && (
+            <View style={styles.dictatePage}>
+              <Text style={styles.headline}>Step {currentStepIndex + 1}: {steps[currentStepIndex]}</Text>
+              <Button title="Repeat" onPress={handleRepeat} color="blue" />
+              <Button title="Next" onPress={handleNext} color="blue" />
+              <Button title="Mission Abort" onPress={handleAbort} color="red" />
+            </View>
+          )}
+
       {viewingChanges && (
         <ScrollView style={styles.scrollContainer}>
           <Text style={styles.headline}>Edit your steps:</Text>
@@ -87,6 +122,9 @@ const ContentView: React.FC = () => {
           <Button title="Start Dictate" onPress={() => console.log("Dictation started")} color="blue" />
         </View>
       )}
+
+
+
     </View>
   );
 };
