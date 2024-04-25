@@ -7,7 +7,7 @@ const ContentView: React.FC = () => {
   const [editing, setEditing] = useState(true);
   const [viewingChanges, setViewingChanges] = useState(false);
   const [startDictate, setStartDictate] = useState(false);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0); // Начальный индекс устанавливаем в 0
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isDictating, setIsDictating] = useState(false);
   
 
@@ -23,29 +23,27 @@ const ContentView: React.FC = () => {
       addStep();
     }
     setEditing(false);
-  };  
+  };
 
-  const startDictation = () => {
-    setStartDictate(true);
-    setCurrentStepIndex(0); // Начинаем диктовку с первого шага
+  const handleStartDictate = () => {
+    setStartDictate(false); // Закрываем экран с кнопкой "Start Dictate"
+    setIsDictating(true); // Начинаем процесс диктовки
   };
-  
-  const handleRepeat = () => {
-    // Повтор текущего шага, никаких изменений в индексе шага не нужно
-  };
-  
+
   const handleNext = () => {
     if (currentStepIndex < steps.length - 1) {
-      setCurrentStepIndex(currentStepIndex + 1); // Переход к следующему шагу
-    } else {
-      // Если следующего шага нет, возможно, стоит сообщить пользователю или закончить диктовку
-      console.log("No more steps"); // или можно вызвать handleAbort
+      setCurrentStepIndex(currentStepIndex + 1);
     }
   };
-  
+
+  const handleRepeat = () => {
+    // Повтор текущего шага
+  };
+
   const handleAbort = () => {
-    setStartDictate(false); // Выход из режима диктовки
-    setCurrentStepIndex(0); // Сброс индекса текущего шага
+    setStartDictate(false);
+    setIsDictating(false);
+    setCurrentStepIndex(0); // Сбросить индекс шага
   };
 
   return (
@@ -66,7 +64,7 @@ const ContentView: React.FC = () => {
         </>
       )}
 
-      {!viewingChanges && !startDictate && (
+      {!viewingChanges && !startDictate && !startDictate && !isDictating && (
         <FlatList
           data={steps}
           keyExtractor={(item, index) => index.toString()}
@@ -77,7 +75,7 @@ const ContentView: React.FC = () => {
         />
       )}
 
-      {!editing && !viewingChanges && !startDictate && (
+      {!editing && !viewingChanges && !startDictate && !isDictating && (
         <>
           <Text style={styles.headline}>Here is your instruction. Would you like to make any changes?</Text>
           <Button title="Edit" onPress={() => setViewingChanges(true)} color="blue" />
@@ -85,16 +83,23 @@ const ContentView: React.FC = () => {
         </>
       )}
 
-      {startDictate && (
-            <View style={styles.dictatePage}>
-              <Text style={styles.headline}>Step {currentStepIndex + 1}: {steps[currentStepIndex]}</Text>
-              <Button title="Repeat" onPress={handleRepeat} color="blue" />
-              <Button title="Next" onPress={handleNext} color="blue" />
-              <Button title="Mission Abort" onPress={handleAbort} color="red" />
-            </View>
-          )}
+      {startDictate && !isDictating && (
+        <View style={styles.dictatePage}>
+          <Text style={styles.headline}>Ready to Dictate</Text>
+          <Button title="Start Dictate" onPress={handleStartDictate} color="blue" />
+        </View>
+      )}
 
-      {viewingChanges && (
+      {isDictating && (
+        <View style={styles.dictatePage}>
+          <Text style={styles.headline}>Step {currentStepIndex + 1}: {steps[currentStepIndex]}</Text>
+          <Button title="Repeat" onPress={handleRepeat} color="blue" />
+          <Button title="Next" onPress={handleNext} color="blue" />
+          <Button title="Mission Abort" onPress={handleAbort} color="red" />
+        </View>
+      )}
+
+{viewingChanges && (
         <ScrollView style={styles.scrollContainer}>
           <Text style={styles.headline}>Edit your steps:</Text>
           {steps.map((step, index) => (
@@ -114,13 +119,6 @@ const ContentView: React.FC = () => {
             setEditing(true);
           }} color="green" />
         </ScrollView>
-      )}
-
-      {startDictate && (
-        <View style={styles.dictatePage}>
-          <Text style={styles.headline}>Ready to Dictate</Text>
-          <Button title="Start Dictate" onPress={() => console.log("Dictation started")} color="blue" />
-        </View>
       )}
 
 
