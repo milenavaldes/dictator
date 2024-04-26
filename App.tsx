@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, FlatList, ScrollView, StyleSheet } from 'react-native';
 
 const DictatePhase = {
-  Editing: 'Editing',
+  Creating: 'Creating',
   ViewingChanges: 'ViewingChanges',
+  Editing: 'Editing',
   ReadyToDictate: 'ReadyToDictate',
   Dictating: 'Dictating',
   MissionAccomplished: 'MissionAccomplished',
@@ -12,7 +13,7 @@ const DictatePhase = {
 const ContentView: React.FC = () => {
   const [currentStep, setCurrentStep] = useState('');
   const [steps, setSteps] = useState<string[]>([]);
-  const [dictatePhase, setDictatePhase] = useState(DictatePhase.Editing);
+  const [dictatePhase, setDictatePhase] = useState(DictatePhase.Creating);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
   const addStep = () => {
@@ -53,7 +54,7 @@ const ContentView: React.FC = () => {
 
   const renderDictatePhase = () => {
     switch (dictatePhase) {
-      case DictatePhase.Editing:
+      case DictatePhase.Creating:
       return (
         <>
           <Text style={styles.headline}>You can add more steps here:</Text>
@@ -77,6 +78,25 @@ const ContentView: React.FC = () => {
           />
         </>
       );
+
+      case DictatePhase.Editing:
+        return (
+          <>
+            <Text style={styles.headline}>Edit your steps:</Text>
+
+            <FlatList
+              data={steps}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item, index }) => (
+                <Text style={styles.listItem}>{`${index + 1}. ${item}`}</Text>
+              )}
+              style={styles.list}
+            />
+            <View style={styles.buttonContainer}>
+            <Button title="Save" onPress={finishEditing} color="gray" />
+            </View>
+          </>
+        );
   
       case DictatePhase.ViewingChanges:
       return (
@@ -92,7 +112,7 @@ const ContentView: React.FC = () => {
           />
           
           <View style={styles.buttonContainer}>
-            <Button title="Edit" onPress={() => setDictatePhase(DictatePhase.Editing)} color="blue" />
+            <Button title="Edit" onPress={() => setDictatePhase(DictatePhase.Creating)} color="blue" />
             <Button title="Accept version" onPress={() => setDictatePhase(DictatePhase.ReadyToDictate)} color="gray" />
           </View>
         </>
