@@ -9,6 +9,7 @@ const ContentView: React.FC = () => {
   const [startDictate, setStartDictate] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isDictating, setIsDictating] = useState(false);
+  const [missionAccomplished, setMissionAccomplished] = useState(false);
   
 
   const addStep = () => {
@@ -33,6 +34,12 @@ const ContentView: React.FC = () => {
   const handleNext = () => {
     if (currentStepIndex < steps.length - 1) {
       setCurrentStepIndex(currentStepIndex + 1);
+    } else {
+      // Если это был последний шаг, выводим сообщение
+      setIsDictating(false); // Останавливаем диктовку
+      // Здесь вы можете также обновить состояние, чтобы показать "Mission accomplished!"
+      // Например, можно использовать новое состояние для управления сообщением
+      setMissionAccomplished(true);
     }
   };
 
@@ -64,7 +71,7 @@ const ContentView: React.FC = () => {
         </>
       )}
 
-      {!viewingChanges && !startDictate && !startDictate && !isDictating && (
+      {!viewingChanges && !startDictate && !isDictating && !missionAccomplished &&(
         <FlatList
           data={steps}
           keyExtractor={(item, index) => index.toString()}
@@ -75,7 +82,7 @@ const ContentView: React.FC = () => {
         />
       )}
 
-      {!editing && !viewingChanges && !startDictate && !isDictating && (
+      {!editing && !viewingChanges && !startDictate && !isDictating &&  !missionAccomplished && (
         <>
           <Text style={styles.headline}>Here is your instruction. Would you like to make any changes?</Text>
           <Button title="Edit" onPress={() => setViewingChanges(true)} color="blue" />
@@ -90,14 +97,28 @@ const ContentView: React.FC = () => {
         </View>
       )}
 
-      {isDictating && (
+      {isDictating && !missionAccomplished && (
         <View style={styles.dictatePage}>
-          <Text style={styles.headline}>Step {currentStepIndex + 1}: {steps[currentStepIndex]}</Text>
-          <Button title="Repeat" onPress={handleRepeat} color="blue" />
-          <Button title="Next" onPress={handleNext} color="blue" />
-          <Button title="Mission Abort" onPress={handleAbort} color="red" />
+          {currentStepIndex < steps.length ? (
+      <>
+        <Text style={styles.headline}>Step {currentStepIndex + 1}: {steps[currentStepIndex]}</Text>
+        <Button title="Repeat" onPress={handleRepeat} color="blue" />
+        <Button title="Next" onPress={handleNext} color="blue" />
+        <Button title="Mission Abort" onPress={handleAbort} color="red" />
+      </>
+    ) : (
+      <Text style={styles.headline}>Mission Accomplished!</Text>
+    )}
         </View>
+        
       )}
+
+{missionAccomplished && (
+  <View style={styles.dictatePage}>
+    <Text style={styles.headline}>Mission Accomplished!</Text>
+    {/* Здесь можно добавить действия после завершения миссии */}
+  </View>
+)}
 
 {viewingChanges && (
         <ScrollView style={styles.scrollContainer}>
