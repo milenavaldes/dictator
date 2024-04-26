@@ -63,8 +63,10 @@ const ContentView: React.FC = () => {
             onChangeText={setCurrentStep}
             style={styles.textInput}
           />
+          <View style={styles.buttonContainer}>
           <Button title="That's it!" onPress={finishEditing} color="gray" />
           <Button title="+ Add Step" onPress={addStep} color="blue" />
+          </View>
           <FlatList
             data={steps}
             keyExtractor={(item, index) => index.toString()}
@@ -79,6 +81,7 @@ const ContentView: React.FC = () => {
       case DictatePhase.ViewingChanges:
       return (
         <>
+          <Text style={styles.headline}>Here is your instruction. Would you like to make any changes?</Text>
           <FlatList
             data={steps}
             keyExtractor={(item, index) => index.toString()}
@@ -87,9 +90,11 @@ const ContentView: React.FC = () => {
             )}
             style={styles.list}
           />
-          <Text style={styles.headline}>Here is your instruction. Would you like to make any changes?</Text>
-          <Button title="Edit" onPress={() => setDictatePhase(DictatePhase.Editing)} color="blue" />
-          <Button title="Accept version" onPress={() => setDictatePhase(DictatePhase.ReadyToDictate)} color="gray" />
+          
+          <View style={styles.buttonContainer}>
+            <Button title="Edit" onPress={() => setDictatePhase(DictatePhase.Editing)} color="blue" />
+            <Button title="Accept version" onPress={() => setDictatePhase(DictatePhase.ReadyToDictate)} color="gray" />
+          </View>
         </>
       );
   
@@ -162,6 +167,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around', // Распределяет кнопки равномерно
+    marginBottom: 20,
   }
 });
 
