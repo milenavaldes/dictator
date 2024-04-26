@@ -1,63 +1,60 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, FlatList, ScrollView, StyleSheet } from 'react-native';
 
+const DictatePhase = {
+  Editing: 'Editing',
+  ViewingChanges: 'ViewingChanges',
+  ReadyToDictate: 'ReadyToDictate',
+  Dictating: 'Dictating',
+  MissionAccomplished: 'MissionAccomplished',
+};
+
 const ContentView: React.FC = () => {
   const [currentStep, setCurrentStep] = useState('');
   const [steps, setSteps] = useState<string[]>([]);
-  const [editing, setEditing] = useState(true);
-  const [viewingChanges, setViewingChanges] = useState(false);
-  const [startDictate, setStartDictate] = useState(false);
+  const [dictatePhase, setDictatePhase] = useState(DictatePhase.Editing);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [isDictating, setIsDictating] = useState(false);
-  const [missionAccomplished, setMissionAccomplished] = useState(false);
-  
 
   const addStep = () => {
     if (currentStep.trim() !== '') {
-      setSteps([...steps, currentStep]);
+      setSteps(prevSteps => [...prevSteps, currentStep]);
       setCurrentStep('');
     }
   };
 
-  const finishSteps = () => {
+  const finishEditing = () => {
     if (currentStep.trim() !== '') {
       addStep();
     }
-    setEditing(false);
+    setDictatePhase(DictatePhase.ViewingChanges);
   };
 
   const handleStartDictate = () => {
-    setStartDictate(false); // Закрываем экран с кнопкой "Start Dictate"
-    setIsDictating(true); // Начинаем процесс диктовки
+    setDictatePhase(DictatePhase.Dictating);
   };
 
   const handleNext = () => {
-    if (currentStepIndex < steps.length - 1) {
-      setCurrentStepIndex(currentStepIndex + 1);
+    const nextIndex = currentStepIndex + 1;
+    if (nextIndex < steps.length) {
+      setCurrentStepIndex(nextIndex);
     } else {
-      // Если это был последний шаг, выводим сообщение
-      setIsDictating(false); // Останавливаем диктовку
-      // Здесь вы можете также обновить состояние, чтобы показать "Mission accomplished!"
-      // Например, можно использовать новое состояние для управления сообщением
-      setMissionAccomplished(true);
+      setDictatePhase(DictatePhase.MissionAccomplished);
     }
   };
 
   const handleRepeat = () => {
-    // Повтор текущего шага
+    // Логика для повторения текущего шага
   };
 
   const handleAbort = () => {
-    setStartDictate(false);
-    setIsDictating(false);
-    setCurrentStepIndex(0); // Сбросить индекс шага
+    setDictatePhase(DictatePhase.ReadyToDictate);
+    setCurrentStepIndex(0);
   };
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.headline}>Dictator</Text>
-
-      {editing && (
+  const renderDictatePhase = () => {
+    switch (dictatePhase) {
+      case DictatePhase.Editing:
+      return (
         <>
           <Text style={styles.headline}>You can add more steps here:</Text>
           <TextInput
@@ -66,84 +63,70 @@ const ContentView: React.FC = () => {
             onChangeText={setCurrentStep}
             style={styles.textInput}
           />
-          <Button title="That's it!" onPress={finishSteps} color="gray" />
+          <Button title="That's it!" onPress={finishEditing} color="gray" />
           <Button title="+ Add Step" onPress={addStep} color="blue" />
+          <FlatList
+            data={steps}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item, index }) => (
+              <Text style={styles.listItem}>{`${index + 1}. ${item}`}</Text>
+            )}
+            style={styles.list}
+          />
         </>
-      )}
-
-      {!viewingChanges && !startDictate && !isDictating && !missionAccomplished &&(
-        <FlatList
-          data={steps}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item, index }) => (
-            <Text style={styles.listItem}>{`${index + 1}. ${item}`}</Text>
-          )}
-          style={styles.list}
-        />
-      )}
-
-      {!editing && !viewingChanges && !startDictate && !isDictating &&  !missionAccomplished && (
+      );
+  
+      case DictatePhase.ViewingChanges:
+      return (
         <>
+          <FlatList
+            data={steps}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item, index }) => (
+              <Text style={styles.listItem}>{`${index + 1}. ${item}`}</Text>
+            )}
+            style={styles.list}
+          />
           <Text style={styles.headline}>Here is your instruction. Would you like to make any changes?</Text>
-          <Button title="Edit" onPress={() => setViewingChanges(true)} color="blue" />
-          <Button title="Accept version" onPress={() => setStartDictate(true)} color="gray" />
+          <Button title="Edit" onPress={() => setDictatePhase(DictatePhase.Editing)} color="blue" />
+          <Button title="Accept version" onPress={() => setDictatePhase(DictatePhase.ReadyToDictate)} color="gray" />
         </>
-      )}
+      );
+  
+      case DictatePhase.ReadyToDictate:
+        return (
+          <View style={styles.dictatePage}>
+            <Text style={styles.headline}>Ready to Dictate</Text>
+            <Button title="Start Dictate" onPress={handleStartDictate} color="blue" />
+          </View>
+        );
 
-      {startDictate && !isDictating && (
-        <View style={styles.dictatePage}>
-          <Text style={styles.headline}>Ready to Dictate</Text>
-          <Button title="Start Dictate" onPress={handleStartDictate} color="blue" />
-        </View>
-      )}
+      case DictatePhase.Dictating:
+        return (
+          <View style={styles.dictatePage}>
+            <Text style={styles.headline}>Step {currentStepIndex + 1}: {steps[currentStepIndex]}</Text>
+            <Button title="Repeat" onPress={handleRepeat} color="blue" />
+            <Button title="Next" onPress={handleNext} color="blue" />
+            <Button title="Mission Abort" onPress={handleAbort} color="red" />
+          </View>
+        );
 
-      {isDictating && !missionAccomplished && (
-        <View style={styles.dictatePage}>
-          {currentStepIndex < steps.length ? (
-      <>
-        <Text style={styles.headline}>Step {currentStepIndex + 1}: {steps[currentStepIndex]}</Text>
-        <Button title="Repeat" onPress={handleRepeat} color="blue" />
-        <Button title="Next" onPress={handleNext} color="blue" />
-        <Button title="Mission Abort" onPress={handleAbort} color="red" />
-      </>
-    ) : (
-      <Text style={styles.headline}>Mission Accomplished!</Text>
-    )}
-        </View>
-        
-      )}
+      case DictatePhase.MissionAccomplished:
+        return (
+          <View style={styles.dictatePage}>
+            <Text style={styles.headline}>Mission Accomplished!</Text>
+          </View>
+        );
 
-{missionAccomplished && (
-  <View style={styles.dictatePage}>
-    <Text style={styles.headline}>Mission Accomplished!</Text>
-    {/* Здесь можно добавить действия после завершения миссии */}
-  </View>
-)}
+      default:
+        return null;
+    }
+  };
 
-{viewingChanges && (
-        <ScrollView style={styles.scrollContainer}>
-          <Text style={styles.headline}>Edit your steps:</Text>
-          {steps.map((step, index) => (
-            <TextInput
-              key={index}
-              value={step}
-              onChangeText={text => {
-                const newSteps = [...steps];
-                newSteps[index] = text;
-                setSteps(newSteps);
-              }}
-              style={styles.textInput}
-            />
-          ))}
-          <Button title="Save Changes" onPress={() => {
-            setViewingChanges(false);
-            setEditing(true);
-          }} color="green" />
-        </ScrollView>
-      )}
-
-
-
+  return (
+    <View style={styles.container}>
+      <Text style={styles.headline}>Dictator</Text>
+      {renderDictatePhase()}
     </View>
   );
 };
