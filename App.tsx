@@ -113,8 +113,8 @@ const ContentView: React.FC = () => {
           />
           
           <View style={styles.buttonContainer}>
-            <Button title="Edit" onPress={() => setDictatePhase(DictatePhase.Editing)} color="blue" />
-            <Button title="Accept version" onPress={() => setDictatePhase(DictatePhase.ReadyToDictate)} color="gray" />
+            <Button title="Edit" onPress={() => setDictatePhase(DictatePhase.Editing)} color="gray" />
+            <Button title="Accept version" onPress={() => setDictatePhase(DictatePhase.ReadyToDictate)} color="blue" />
           </View>
         </>
       );
@@ -132,7 +132,7 @@ const ContentView: React.FC = () => {
           <View style={styles.dictatePage}>
             <Text style={styles.headline}>Step {currentStepIndex + 1}: {steps[currentStepIndex]}</Text>
             <View style={styles.buttonContainer}>
-            <Button title="Repeat" onPress={handleRepeat} color="blue" />
+            <Button title="Repeat" onPress={handleRepeat} color="gray" />
             <Button title="Next" onPress={handleNext} color="blue" />
             </View>
             <Button title="Mission Abort" onPress={handleAbort} color="red" />
@@ -143,6 +143,15 @@ const ContentView: React.FC = () => {
         return (
           <View style={styles.dictatePage}>
             <Text style={styles.headline}>Mission Accomplished!</Text>
+            <Button
+              title="Begin new task"
+              onPress={() => {
+                setDictatePhase(DictatePhase.Creating);
+                setSteps([]);
+                setCurrentStepIndex(0); // Также сбрасываем индекс текущего шага
+              }}
+              color="blue"
+              />
           </View>
         );
 
