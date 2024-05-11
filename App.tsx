@@ -81,21 +81,22 @@ const ContentView: React.FC = () => {
 
       case DictatePhase.Editing:
         return (
-          <>
-            <Text style={styles.headline}>Edit your steps:</Text>
-
-            <FlatList
-              data={steps}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item, index }) => (
-                <Text style={styles.listItem}>{`${index + 1}. ${item}`}</Text>
-              )}
-              style={styles.list}
+          <ScrollView style={styles.scrollContainer}>
+          <Text style={styles.headline}>Edit your steps:</Text>
+          {steps.map((step, index) => (
+            <TextInput
+              key={index}
+              value={step}
+              onChangeText={text => {
+                const newSteps = [...steps];
+                newSteps[index] = text;
+                setSteps(newSteps);
+              }}
+              style={styles.textInput}
             />
-            <View style={styles.buttonContainer}>
-            <Button title="Save" onPress={finishEditing} color="gray" />
-            </View>
-          </>
+          ))}
+          <Button title="Save Changes" onPress={() => setDictatePhase(DictatePhase.Creating)} color="green" />
+        </ScrollView>
         );
   
       case DictatePhase.ViewingChanges:
@@ -112,7 +113,7 @@ const ContentView: React.FC = () => {
           />
           
           <View style={styles.buttonContainer}>
-            <Button title="Edit" onPress={() => setDictatePhase(DictatePhase.Creating)} color="blue" />
+            <Button title="Edit" onPress={() => setDictatePhase(DictatePhase.Editing)} color="blue" />
             <Button title="Accept version" onPress={() => setDictatePhase(DictatePhase.ReadyToDictate)} color="gray" />
           </View>
         </>
@@ -130,8 +131,10 @@ const ContentView: React.FC = () => {
         return (
           <View style={styles.dictatePage}>
             <Text style={styles.headline}>Step {currentStepIndex + 1}: {steps[currentStepIndex]}</Text>
+            <View style={styles.buttonContainer}>
             <Button title="Repeat" onPress={handleRepeat} color="blue" />
             <Button title="Next" onPress={handleNext} color="blue" />
+            </View>
             <Button title="Mission Abort" onPress={handleAbort} color="red" />
           </View>
         );
