@@ -1,0 +1,11 @@
+<Privacy>
+    <DataUsed>
+        <None>
+            <Purpose string="This app does not collect or use any personal data.">
+                <Reason string="The app uses text-to-speech functionality for enhancing user experience without any data collection.">
+                    <Required string="NO"/>
+                </Reason>
+            </Purpose>
+        </None>
+    </DataUsed>
+</Privacy>
