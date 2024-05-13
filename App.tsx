@@ -1,5 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, ScrollView, StyleSheet } from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+} from 'react-native';
+import TTS from './src/utils/useTTS';
 
 const DictatePhase = {
   Creating: 'Creating',
@@ -15,6 +24,25 @@ const ContentView: React.FC = () => {
   const [steps, setSteps] = useState<string[]>([]);
   const [dictatePhase, setDictatePhase] = useState(DictatePhase.Creating);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+
+  useEffect(() => {
+    TTS.initializeTTS();
+    if (
+      dictatePhase === DictatePhase.Dictating &&
+      steps.length > 0 &&
+      currentStepIndex < steps.length
+    ) {
+      TTS.speak(steps[currentStepIndex]);
+    }
+
+    if (dictatePhase === DictatePhase.MissionAccomplished) {
+      TTS.speak('Mission accomplished!');
+    }
+    
+    return () => {
+      TTS.stop(); // Останавливаем любую озвучку
+    };
+  }, [currentStepIndex, dictatePhase, steps]);
 
   const addStep = () => {
     if (currentStep.trim() !== '') {
@@ -32,6 +60,9 @@ const ContentView: React.FC = () => {
 
   const handleStartDictate = () => {
     setDictatePhase(DictatePhase.Dictating);
+    if (steps.length > 0 && currentStepIndex === 0) {
+      TTS.speak(steps[0]);
+    }
   };
 
   const handleNext = () => {
@@ -44,7 +75,9 @@ const ContentView: React.FC = () => {
   };
 
   const handleRepeat = () => {
-    // Логика для повторения текущего шага
+    if (currentStepIndex < steps.length) {
+      TTS.speak(steps[currentStepIndex]); // Повторно прочитать текущий шаг
+    }
   };
 
   const handleAbort = () => {
@@ -55,85 +88,105 @@ const ContentView: React.FC = () => {
   const renderDictatePhase = () => {
     switch (dictatePhase) {
       case DictatePhase.Creating:
-      return (
-        <>
-          <Text style={styles.headline}>You can add more steps here:</Text>
-          <TextInput
-            multiline
-            value={currentStep}
-            onChangeText={setCurrentStep}
-            style={styles.textInput}
-          />
-          <View style={styles.buttonContainer}>
-          <Button title="That's it!" onPress={finishEditing} color="gray" />
-          <Button title="+ Add Step" onPress={addStep} color="blue" />
-          </View>
-          <FlatList
-            data={steps}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item, index }) => (
-              <Text style={styles.listItem}>{`${index + 1}. ${item}`}</Text>
-            )}
-            style={styles.list}
-          />
-        </>
-      );
+        return (
+          <>
+            <Text style={styles.headline}>Create your instructions:</Text>
+            <TextInput
+              multiline
+              value={currentStep}
+              onChangeText={setCurrentStep}
+              style={styles.textInput}
+            />
+            <View style={styles.buttonContainer}>
+              <Button title="That's it!" onPress={finishEditing} color="gray" />
+              <Button title="+ Add Step" onPress={addStep} color="blue" />
+            </View>
+            <FlatList
+              data={steps}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({item, index}) => (
+                <Text style={styles.listItem}>{`${index + 1}. ${item}`}</Text>
+              )}
+              style={styles.list}
+            />
+          </>
+        );
 
       case DictatePhase.Editing:
         return (
           <ScrollView style={styles.scrollContainer}>
-          <Text style={styles.headline}>Edit your steps:</Text>
-          {steps.map((step, index) => (
-            <TextInput
-              key={index}
-              value={step}
-              onChangeText={text => {
-                const newSteps = [...steps];
-                newSteps[index] = text;
-                setSteps(newSteps);
-              }}
-              style={styles.textInput}
+            <Text style={styles.headline}>Edit your steps:</Text>
+            {steps.map((step, index) => (
+              <TextInput
+                key={index}
+                value={step}
+                onChangeText={text => {
+                  const newSteps = [...steps];
+                  newSteps[index] = text;
+                  setSteps(newSteps);
+                }}
+                style={styles.textInput}
+              />
+            ))}
+            <Button
+              title="Save Changes"
+              onPress={() => setDictatePhase(DictatePhase.Creating)}
+              color="green"
             />
-          ))}
-          <Button title="Save Changes" onPress={() => setDictatePhase(DictatePhase.Creating)} color="green" />
-        </ScrollView>
+          </ScrollView>
         );
-  
+
       case DictatePhase.ViewingChanges:
-      return (
-        <>
-          <Text style={styles.headline}>Here is your instruction. Would you like to make any changes?</Text>
-          <FlatList
-            data={steps}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item, index }) => (
-              <Text style={styles.listItem}>{`${index + 1}. ${item}`}</Text>
-            )}
-            style={styles.list}
-          />
-          
-          <View style={styles.buttonContainer}>
-            <Button title="Edit" onPress={() => setDictatePhase(DictatePhase.Editing)} color="gray" />
-            <Button title="Accept version" onPress={() => setDictatePhase(DictatePhase.ReadyToDictate)} color="blue" />
-          </View>
-        </>
-      );
-  
+        return (
+          <>
+            <Text style={styles.headline}>
+              Here is your instruction. Would you like to make any changes?
+            </Text>
+            <FlatList
+              data={steps}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({item, index}) => (
+                <Text style={styles.listItem}>{`${index + 1}. ${item}`}</Text>
+              )}
+              style={styles.list}
+            />
+
+            <View style={styles.buttonContainer}>
+              <Button
+                title="Edit"
+                onPress={() => setDictatePhase(DictatePhase.Editing)}
+                color="gray"
+              />
+              <Button
+                title="Accept"
+                onPress={() => setDictatePhase(DictatePhase.ReadyToDictate)}
+                color="blue"
+              />
+            </View>
+          </>
+        );
+
       case DictatePhase.ReadyToDictate:
         return (
           <View style={styles.dictatePage}>
             <Text style={styles.headline}>Ready to Dictate</Text>
-            <Button title="Start Dictate" onPress={handleStartDictate} color="blue" />
+            <Button
+              title="Start Dictate"
+              onPress={handleStartDictate}
+              color="blue"
+            />
           </View>
         );
 
       case DictatePhase.Dictating:
         return (
           <View style={styles.dictatePage}>
-            <Text style={styles.headline}>Step {currentStepIndex + 1}: {steps[currentStepIndex]}</Text>
+            <Text style={styles.headline}>
+              Step {currentStepIndex + 1}: {steps[currentStepIndex]}
+            </Text>
             <View style={styles.buttonContainer}>
-            <Button title="Repeat" onPress={handleRepeat} color="gray" />
-            <Button title="Next" onPress={handleNext} color="blue" />
+              <Button title="Repeat" onPress={handleRepeat} color="gray" />
+              <Button title="Next" onPress={handleNext} color="blue" />
             </View>
             <Button title="Mission Abort" onPress={handleAbort} color="red" />
           </View>
@@ -151,7 +204,7 @@ const ContentView: React.FC = () => {
                 setCurrentStepIndex(0); // Также сбрасываем индекс текущего шага
               }}
               color="blue"
-              />
+            />
           </View>
         );
 
@@ -193,8 +246,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     padding: 10,
   },
-  scrollContainer: {
-  },
+  scrollContainer: {},
   dictatePage: {
     flex: 1,
     justifyContent: 'center',
@@ -204,7 +256,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around', // Распределяет кнопки равномерно
     marginBottom: 20,
-  }
+  },
 });
 
 export default ContentView;
