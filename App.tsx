@@ -38,7 +38,7 @@ const ContentView: React.FC = () => {
     if (dictatePhase === DictatePhase.MissionAccomplished) {
       TTS.speak('Mission accomplished!');
     }
-    
+
     return () => {
       TTS.stop(); // Останавливаем любую озвучку
     };
