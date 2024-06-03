@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, FlatList, ScrollView } from 'react-native';
-import TTS from './src/utils/useTTS';
-import styles from './src/utils/styles';
+import TTS from '../utils/useTTS';
+import styles from '../utils/styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 enum DictatePhase {
