@@ -15,7 +15,42 @@ enum DictatePhase {
 
 const ContentView: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<string>('');
-  const [steps, setSteps] = useState<string[]>([]);
+  const [steps, setSteps] = useState<string[]>([
+    "Good morning, everyone.",
+    "Today,",
+    "we stand at the forefront",
+    "of a technological revolution",
+    "powered by artificial intelligence.",
+    "AI",
+    "is not just a buzzword;",
+    "it is transforming industries",
+    "from healthcare to finance",
+    "creating unprecedented opportunities",
+    "for innovation.",
+    "As we delve deeper",
+    "into AI research,",
+    "we must also address",
+    "the ethical implications",
+    "and ensure",
+    "that these technologies",
+    "are used responsibly.",
+    "Collaboration",
+    "between academia,",
+    "industry,",
+    "and government",
+    "is crucial",
+    "to navigating these challenges.",
+    "Let us embrace the future",
+    "with a commitment",
+    "to advancing AI",
+    "in ways",
+    "that benefit",
+    "all of humanity."
+    // "Привет!",
+    // "Поговорим теперь по-русски",
+    // "Потрещим о том о сём",
+    // "Так сказать, обкашляем вопросики"
+  ]);
   const [dictatePhase, setDictatePhase] = useState<DictatePhase>(DictatePhase.Creating);
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
 
@@ -70,6 +105,15 @@ const ContentView: React.FC = () => {
     }
   };
 
+  const handleBack = () => {
+    const backIndex = currentStepIndex - 1;
+    if (backIndex >= 0) {
+      setCurrentStepIndex(backIndex);
+    } else {
+      TTS.speak(steps[currentStepIndex]);
+    }
+  };
+
   const handleRepeat = () => {
     if (currentStepIndex < steps.length) {
       TTS.speak(steps[currentStepIndex]); // Повторно прочитать текущий шаг
@@ -77,8 +121,7 @@ const ContentView: React.FC = () => {
   };
 
   const handleAbort = () => {
-    setDictatePhase(DictatePhase.ReadyToDictate);
-    setCurrentStepIndex(0);
+    setDictatePhase(DictatePhase.ViewingChanges);
   };
 
   const renderDictatePhase = () => {
@@ -181,6 +224,7 @@ const ContentView: React.FC = () => {
               Step {currentStepIndex + 1}: {steps[currentStepIndex]}
             </Text>
             <View style={styles.buttonContainer}>
+              <Button title="Back" onPress={handleBack} color="red" />
               <Button title="Repeat" onPress={handleRepeat} color="gray" />
               <Button title="Next" onPress={handleNext} color="blue" />
             </View>
