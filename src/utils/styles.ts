@@ -37,6 +37,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around', // Распределяет кнопки равномерно
     marginBottom: 20,
   },
+
+  countdown: {
+    fontSize: 30,
+    fontWeight:"bold",
+    color: 'black',
+    marginVertical: 10,
+  },
 });
 
 export default styles;

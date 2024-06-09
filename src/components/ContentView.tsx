@@ -22,13 +22,14 @@ const ContentView: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<string>('');
   const [currentDuration, setCurrentDuration] = useState<number | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const [dictatePhase, setDictatePhase] = useState<DictatePhase>(DictatePhase.Creating);
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
 
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    TTS.initializeTTS();
+    let timer: NodeJS.Timeout;
     if (
       dictatePhase === DictatePhase.Dictating &&
       steps.length > 0 &&
@@ -36,19 +37,30 @@ const ContentView: React.FC = () => {
     ) {
       TTS.speak(steps[currentStepIndex].text);
       if (steps[currentStepIndex].duration) {
-        const timer = setTimeout(() => {
-          handleNext();
-        }, steps[currentStepIndex].duration! * 1000);
-        return () => clearTimeout(timer);
+        setCountdown(steps[currentStepIndex].duration ?? null);
+        timer = setInterval(() => {
+          setCountdown(prevCountdown => {
+            if (prevCountdown && prevCountdown > 1) {
+              return prevCountdown - 1;
+            } else {
+              clearInterval(timer);
+              handleNext();
+              return null;
+            }
+          });
+        }, 1000);
       }
+    } else {
+      setCountdown(null);
     }
-
+  
     if (dictatePhase === DictatePhase.MissionAccomplished) {
       TTS.speak('Mission accomplished!');
     }
-
+  
     return () => {
       TTS.stop(); // Останавливаем любую озвучку
+      clearInterval(timer);
     };
   }, [currentStepIndex, dictatePhase, steps]);
 
@@ -204,20 +216,25 @@ const ContentView: React.FC = () => {
           </View>
         );
 
-      case DictatePhase.Dictating:
-        return (
-          <View style={styles.dictatePage}>
-            <Text style={styles.headline}>
-              Step {currentStepIndex + 1}: {steps[currentStepIndex].text}
-            </Text>
-            <View style={styles.buttonContainer}>
-              <Button title="Back" onPress={handleBack} color="red" />
-              <Button title="Repeat" onPress={handleRepeat} color="gray" />
-              <Button title="Next" onPress={handleNext} color="blue" />
+        case DictatePhase.Dictating:
+          return (
+            <View style={styles.dictatePage}>
+              <Text style={styles.headline}>
+                Step {currentStepIndex + 1}: {steps[currentStepIndex].text}
+              </Text>
+              {countdown !== null && (
+                <Text style={styles.countdown}>
+                  {countdown} s
+                </Text>
+              )}
+              <View style={styles.buttonContainer}>
+                <Button title="Back" onPress={handleBack} color="red" />
+                <Button title="Repeat" onPress={handleRepeat} color="gray" />
+                <Button title="Next" onPress={handleNext} color="blue" />
+              </View>
+              <Button title="Mission Abort" onPress={handleAbort} color="red" />
             </View>
-            <Button title="Mission Abort" onPress={handleAbort} color="red" />
-          </View>
-        );
+          );
 
       case DictatePhase.MissionAccomplished:
         return (
