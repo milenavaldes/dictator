@@ -40,7 +40,9 @@ const ContentView: React.FC = () => {
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    TTS.initializeTTS();
+    TTS.initializeTTS('en-US');
+
+    //TTS.setLanguage('ru-RU');
 
     const onTTSFinish = () => {
       console.log('TTS finished');
@@ -98,7 +100,7 @@ const ContentView: React.FC = () => {
     const match = stepText.match(/\((\d+)\)$/);
     const duration = match ? parseInt(match[1], 10) : null;
     const text = match ? stepText.replace(/\s*\(\d+\)$/, '') : stepText;
-    return {text, duration};
+    return { text: text.trim(), duration };
   };
 
   const addStep = () => {
@@ -121,11 +123,7 @@ const ContentView: React.FC = () => {
   };
 
   const finishCreating = () => {
-    if (currentStep.trim() !== '') {
-      const step = parseStep(currentStep);
-      setSteps(prevSteps => [...prevSteps, step]);
-      setCurrentStep('');
-    }
+    setCurrentStep('');
     setDictatePhase(DictatePhase.ViewingChanges);
   };
 
@@ -184,6 +182,16 @@ const ContentView: React.FC = () => {
     );
   };
 
+  const parseStepsFromText = (text: string): Step[] => {
+    return text.split('\n').map(line => parseStep(line.trim())).filter(step => step.text.length > 0);
+  };
+
+  const handleChangeText = (text: string) => {
+    setCurrentStep(text);
+    const newSteps = parseStepsFromText(text);
+    setSteps(newSteps);
+  };
+
   const renderStepsList = (list: Step[], title: string) => (
     <>
       <Text style={styles.headline}>{title}</Text>
@@ -212,7 +220,7 @@ const ContentView: React.FC = () => {
                   <TextInput
                     multiline
                     value={currentStep}
-                    onChangeText={setCurrentStep}
+                    onChangeText={handleChangeText}
                     style={styles.textInput}
                     placeholder="Enter step  (optional: duration in seconds)"
                   />

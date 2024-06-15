@@ -1,9 +1,13 @@
 import Tts from 'react-native-tts';
 
-const initializeTTS = (language = 'en-US') => {
+const initializeTTS = (language: string = 'en-US') => {
   Tts.setDefaultLanguage(language);
-  Tts.setDefaultRate(0.6); //0.6
-  Tts.setDefaultPitch(1.0); //1
+  Tts.setDefaultRate(0.6);
+  Tts.setDefaultPitch(1.0);
+};
+
+const setLanguage = (language: string) => {
+  Tts.setDefaultLanguage(language);
 };
 
 const speak = (text: string) => {
@@ -16,6 +20,7 @@ const stop = () => {
 
 export default {
   initializeTTS,
+  setLanguage,
   speak,
   stop,
 };
