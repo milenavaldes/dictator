@@ -17,6 +17,7 @@ const styles = StyleSheet.create({
     borderColor: 'grey',
     marginBottom: 20,
     padding: 10,
+    textAlignVertical: 'top',
   },
   list: {
     flexGrow: 0,
@@ -40,7 +41,7 @@ const styles = StyleSheet.create({
 
   countdown: {
     fontSize: 30,
-    fontWeight:"bold",
+    fontWeight: 'bold',
     color: 'black',
     marginVertical: 10,
   },
