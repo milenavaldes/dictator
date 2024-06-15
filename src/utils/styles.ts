@@ -17,6 +17,7 @@ const styles = StyleSheet.create({
     borderColor: 'grey',
     marginBottom: 20,
     padding: 10,
+    textAlignVertical: 'top',
   },
   list: {
     flexGrow: 0,
@@ -36,6 +37,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around', // Распределяет кнопки равномерно
     marginBottom: 20,
+  },
+
+  countdown: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: 'black',
+    marginVertical: 10,
   },
 });
 
