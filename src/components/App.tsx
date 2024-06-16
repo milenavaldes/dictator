@@ -1,11 +1,14 @@
 import React from 'react';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { View } from 'react-native';
 import ContentView from './ContentView';
 
 const App: React.FC = () => {
   return (
     <SafeAreaProvider>
-      <ContentView />
+      <View style={{ flex: 1 }}>
+        <ContentView />
+      </View>
     </SafeAreaProvider>
   );
 };
