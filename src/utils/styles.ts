@@ -1,4 +1,4 @@
-import {StyleSheet} from 'react-native';
+import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
   container: {
@@ -26,8 +26,15 @@ const styles = StyleSheet.create({
   listItem: {
     fontSize: 16,
     padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
   },
-  scrollContainer: {},
+  listItemText: {
+    fontSize: 18,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+  },
   dictatePage: {
     flex: 1,
     justifyContent: 'center',
@@ -35,10 +42,9 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around', // Распределяет кнопки равномерно
+    justifyContent: 'space-around',
     marginBottom: 20,
   },
-
   countdown: {
     fontSize: 30,
     fontWeight: 'bold',
