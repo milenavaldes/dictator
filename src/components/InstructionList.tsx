@@ -51,14 +51,18 @@ const InstructionList: React.FC<InstructionListProps> = ({ instructions, onSelec
         renderItem={({ item }) => (
           <View style={styles.listItem}>
             <Text style={styles.listItemText}>{item.title}</Text>
-            <Button title="Edit" onPress={() => onSelect(item)} />
+            <View style={styles.listInstructionButtonContainer}>
             <Button title="Delete" onPress={() => confirmDeleteInstruction(item.id)} color="red" />
+            <Button title="Edit" onPress={() => onSelect(item)} />
             <Button title="Start" onPress={() => onStart(item)} color="green" />
+            </View>
           </View>
         )}
         style={styles.list}
       />
+      <View style={styles.createInstructionButton}>
       <Button title="Create New Instruction" onPress={onCreate} />
+      </View>
     </View>
   );
 };

@@ -2,7 +2,7 @@ import Tts from 'react-native-tts';
 
 const initializeTTS = (language: string = 'en-US') => {
   Tts.setDefaultLanguage(language);
-  Tts.setDefaultRate(0.6);
+  Tts.setDefaultRate(0.5);
   Tts.setDefaultPitch(1.0);
 };
 

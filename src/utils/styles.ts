@@ -7,18 +7,40 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   headline: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 20,
   },
-  textInput: {
-    minHeight: 100,
+  instructionTitleInput: {
+    minHeight: 50,
     borderWidth: 1,
     borderColor: 'grey',
     marginBottom: 20,
     padding: 10,
     textAlignVertical: 'top',
   },
+
+  instructionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+
+  textInput: {
+    height: 400,
+    borderWidth: 1,
+    borderColor: 'grey',
+    marginBottom: 20,
+    padding: 10,
+    textAlignVertical: 'top',
+  },
+
   list: {
     flexGrow: 0,
     marginBottom: 20,
@@ -30,7 +52,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#ccc',
   },
   listItemText: {
-    fontSize: 18,
+    fontSize: 22,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -40,11 +62,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: 20,
   },
+
+  creatingButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+  },
+
+  listInstructionButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 0,
+  },
+
+  createInstructionButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 0,
+  },
+
   countdown: {
     fontSize: 30,
     fontWeight: 'bold',

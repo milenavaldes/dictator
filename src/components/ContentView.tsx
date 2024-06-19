@@ -166,15 +166,33 @@ const ContentView: React.FC = () => {
   };
 
   const startEditing = () => {
-    const stepsText = steps.map(step => `${step.text}${step.duration ? ` (${step.duration})` : ''}`).join('\n');
-    setCurrentStep(stepsText);
+    if (selectedInstruction) {
+      setCurrentTitle(selectedInstruction.title);
+      const stepsText = selectedInstruction.steps.map(step => `${step.text}${step.duration ? ` (${step.duration})` : ''}`).join('\n');
+      setCurrentStep(stepsText);
+    }
     setDictatePhase(DictatePhase.Editing);
-  };
+  }; 
 
   const finishEditing = () => {
     const newSteps = currentStep.split('\n').map(line => parseStep(line.trim())).filter(step => step.text.length > 0);
-    setSteps(newSteps);
-    setDictatePhase(DictatePhase.ViewingChanges);
+  
+    if (selectedInstruction) {
+      const updatedInstruction = {
+        ...selectedInstruction,
+        title: currentTitle,
+        steps: newSteps,
+      };
+  
+      saveInstruction(updatedInstruction).then(() => {
+        setInstructions(prev =>
+          prev.map(instr => (instr.id === updatedInstruction.id ? updatedInstruction : instr))
+        );
+        setSelectedInstruction(updatedInstruction);
+        setSteps(newSteps);
+        setDictatePhase(DictatePhase.ViewingChanges);
+      });
+    }
   };
 
   const handleStartDictate = () => {
@@ -250,11 +268,12 @@ const ContentView: React.FC = () => {
         return (
           <>
             <Text style={styles.headline}>Create your instructions:</Text>
+            
             <TextInput
               placeholder="Title"
               value={currentTitle}
               onChangeText={setCurrentTitle}
-              style={styles.textInput}
+              style={styles.instructionTitleInput}
             />
             <TextInput
               multiline
@@ -263,7 +282,7 @@ const ContentView: React.FC = () => {
               style={styles.textInput}
               placeholder="Enter steps, each on a new line"
             />
-            <View style={styles.buttonContainer}>
+            <View style={styles.creatingButtonContainer}>
               <Button title="Don't Save" onPress={handleAbort} color="red" />
               <Button title="Save" onPress={finishCreating} color="green" />
             </View>
@@ -272,24 +291,33 @@ const ContentView: React.FC = () => {
       case DictatePhase.Editing:
         return (
           <ScrollView style={styles.scrollContainer}>
-            <Text style={styles.headline}>Edit your steps:</Text>
+            <Text style={styles.headline}>Edit your instruction:</Text>
+            <TextInput
+              multiline
+              value={currentTitle}
+              onChangeText={setCurrentTitle}
+              style={styles.instructionTitleInput}
+              placeholder="Enter title"
+            />
             <TextInput
               multiline
               value={currentStep}
               onChangeText={setCurrentStep}
               style={styles.textInput}
-              placeholder="Enter steps, each on a new line"
+              placeholder="Enter steps, new line for each step"
             />
             <Button title="Save Changes" onPress={finishEditing} color="green" />
             <Button title="Discard changes" onPress={handleAbort} color="red" />
           </ScrollView>
         );
+        
       case DictatePhase.ViewingChanges:
         return (
           <>
             <Text style={styles.headline}>
               Here is your instruction. Would you like to make any changes?
             </Text>
+            <Text style={styles.instructionTitle}>{currentTitle}</Text>
             {renderStepsList(steps, 'Steps')}
             <View style={styles.buttonContainer}>
               <Button title="Edit" onPress={startEditing} color="gray" />
