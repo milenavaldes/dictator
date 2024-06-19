@@ -1,19 +1,16 @@
-import React, {useState, useEffect} from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  FlatList,
-  ScrollView,
-  Alert,
-} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Button, FlatList, ScrollView, Alert } from 'react-native';
 import TTS from '../utils/useTTS';
 import Tts from 'react-native-tts';
 import styles from '../utils/styles';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import InstructionList from './InstructionList';
+import InstructionEditor from './InstructionEditor';
+import { loadInstructions, saveInstruction, deleteInstruction } from '../utils/storage';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import uuid from 'react-native-uuid';
 
 enum DictatePhase {
+  InstructionList = 'InstructionList',
   Creating = 'Creating',
   ViewingChanges = 'ViewingChanges',
   Editing = 'Editing',
@@ -24,25 +21,35 @@ enum DictatePhase {
 
 interface Step {
   text: string;
-  duration?: number | null; // Optional duration in seconds
+  duration?: number | null;
+}
+
+interface Instruction {
+  id: string;
+  title: string;
+  steps: Step[];
 }
 
 const ContentView: React.FC = () => {
+  const [currentTitle, setCurrentTitle] = useState<string>('');
   const [currentStep, setCurrentStep] = useState<string>('');
+  const [selectedInstruction, setSelectedInstruction] = useState<Instruction | null>(null);
+  const [instructions, setInstructions] = useState<Instruction[]>([]);
   const [steps, setSteps] = useState<Step[]>([]);
   const [countdown, setCountdown] = useState<number | null>(null);
-  const [dictatePhase, setDictatePhase] = useState<DictatePhase>(
-    DictatePhase.Creating,
-  );
+  const [dictatePhase, setDictatePhase] = useState<DictatePhase>(DictatePhase.InstructionList);
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
-  const [editSteps, setEditSteps] = useState<Step[]>([]);
 
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    TTS.initializeTTS('en-US');
+    const fetchInstructions = async () => {
+      const loadedInstructions = await loadInstructions();
+      setInstructions(loadedInstructions);
+    };
+    fetchInstructions();
 
-    //TTS.setLanguage('ru-RU');
+    TTS.initializeTTS('en-US');
 
     const onTTSFinish = () => {
       console.log('TTS finished');
@@ -60,6 +67,7 @@ const ContentView: React.FC = () => {
       Tts.removeAllListeners('tts-start');
     };
   }, []);
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (
@@ -103,28 +111,88 @@ const ContentView: React.FC = () => {
     return { text: text.trim(), duration };
   };
 
-  const addStep = () => {
-    if (currentStep.trim() !== '') {
-      const step = parseStep(currentStep);
-      setSteps(prevSteps => [...prevSteps, step]);
-      setCurrentStep('');
-    }
-  };
-
-  const startEditing = () => {
-    const deepCopySteps = JSON.parse(JSON.stringify(steps)); // Глубокое копирование
-    setEditSteps(deepCopySteps); // Копируем шаги в временное хранилище
-    setDictatePhase(DictatePhase.Editing);
-  };
-
-  const finishEditing = () => {
-    setSteps([...editSteps]); // Сохраняем изменения из временного состояния в основное
-    setDictatePhase(DictatePhase.ViewingChanges);
+  const startCreating = () => {
+    setCurrentTitle('');
+    setCurrentStep('');
+    setSteps([]);
+    setDictatePhase(DictatePhase.Creating);
   };
 
   const finishCreating = () => {
-    setCurrentStep('');
-    setDictatePhase(DictatePhase.ViewingChanges);
+    if (currentStep.trim() !== '' && currentTitle.trim() !== '') {
+      const stepLines = currentStep.split('\n');
+      const newSteps = stepLines.map(line => parseStep(line.trim())).filter(step => step.text.length > 0);
+      const newInstruction: Instruction = {
+        id: uuid.v4().toString(),
+        title: currentTitle,
+        steps: newSteps,
+      };
+      saveInstruction(newInstruction).then(() => {
+        setInstructions(prev => [...prev, newInstruction]);
+        setSelectedInstruction(newInstruction);
+        setSteps(newSteps);
+        setDictatePhase(DictatePhase.ViewingChanges);
+      });
+    }
+  };
+
+  const handleSaveInstruction = async (instruction: Instruction) => {
+    await saveInstruction(instruction);
+    const updatedInstructions = await loadInstructions();
+    setInstructions(updatedInstructions);
+    setSelectedInstruction(instruction);
+  };
+
+  const handleDeleteInstruction = async (id: string) => {
+    Alert.alert(
+      'Delete Instruction',
+      'Are you sure you want to delete this instruction?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteInstruction(id);
+            const updatedInstructions = await loadInstructions();
+            setInstructions(updatedInstructions);
+          },
+        },
+      ],
+    );
+  };
+
+  const startEditing = () => {
+    if (selectedInstruction) {
+      setCurrentTitle(selectedInstruction.title);
+      const stepsText = selectedInstruction.steps.map(step => `${step.text}${step.duration ? ` (${step.duration})` : ''}`).join('\n');
+      setCurrentStep(stepsText);
+    }
+    setDictatePhase(DictatePhase.Editing);
+  }; 
+
+  const finishEditing = () => {
+    const newSteps = currentStep.split('\n').map(line => parseStep(line.trim())).filter(step => step.text.length > 0);
+  
+    if (selectedInstruction) {
+      const updatedInstruction = {
+        ...selectedInstruction,
+        title: currentTitle,
+        steps: newSteps,
+      };
+  
+      saveInstruction(updatedInstruction).then(() => {
+        setInstructions(prev =>
+          prev.map(instr => (instr.id === updatedInstruction.id ? updatedInstruction : instr))
+        );
+        setSelectedInstruction(updatedInstruction);
+        setSteps(newSteps);
+        setDictatePhase(DictatePhase.ViewingChanges);
+      });
+    }
   };
 
   const handleStartDictate = () => {
@@ -159,37 +227,7 @@ const ContentView: React.FC = () => {
   };
 
   const handleAbort = () => {
-    setDictatePhase(DictatePhase.ViewingChanges);
-  };
-
-  const confirmDiscardChanges = () => {
-    Alert.alert(
-      'Discard Changes',
-      'Are you sure you want to discard your changes?',
-      [
-        {
-          text: 'No',
-          style: 'cancel',
-        },
-        {
-          text: 'Yes',
-          onPress: () => {
-            setEditSteps([...steps]); // Восстанавливаем временное хранилище
-            setDictatePhase(DictatePhase.ViewingChanges);
-          },
-        },
-      ],
-    );
-  };
-
-  const parseStepsFromText = (text: string): Step[] => {
-    return text.split('\n').map(line => parseStep(line.trim())).filter(step => step.text.length > 0);
-  };
-
-  const handleChangeText = (text: string) => {
-    setCurrentStep(text);
-    const newSteps = parseStepsFromText(text);
-    setSteps(newSteps);
+    setDictatePhase(DictatePhase.InstructionList);
   };
 
   const renderStepsList = (list: Step[], title: string) => (
@@ -198,10 +236,8 @@ const ContentView: React.FC = () => {
       <FlatList
         data={list}
         keyExtractor={(item, index) => index.toString()}
-        renderItem={({item, index}) => (
-          <Text style={styles.listItem}>{`${index + 1}. ${item.text} ${
-            item.duration ? `(Duration: ${item.duration} s)` : ''
-          }`}</Text>
+        renderItem={({ item, index }) => (
+          <Text style={styles.listItem}>{`${index + 1}. ${item.text} ${item.duration ? `(Duration: ${item.duration} s)` : ''}`}</Text>
         )}
         style={styles.list}
       />
@@ -209,144 +245,156 @@ const ContentView: React.FC = () => {
   );
 
   const renderDictatePhase = () => {
-    return (
-      <>
-        {(() => {
-          switch (dictatePhase) {
-            case DictatePhase.Creating:
-              return (
-                <>
-                  <Text style={styles.headline}>Create your instructions:</Text>
-                  <TextInput
-                    multiline
-                    value={currentStep}
-                    onChangeText={handleChangeText}
-                    style={styles.textInput}
-                    placeholder="Enter step  (optional: duration in seconds)"
-                  />
-                  <View style={styles.buttonContainer}>
-                    <Button
-                      title="That's it!"
-                      onPress={finishCreating}
-                      color="gray"
-                    />
-                    <Button title="+ Add Step" onPress={addStep} color="blue" />
-                  </View>
-                </>
-              );
-            case DictatePhase.Editing:
-              return (
-                <ScrollView style={styles.scrollContainer}>
-                  <Text style={styles.headline}>Edit your steps:</Text>
-                  {editSteps.map((step, index) => (
-                    <TextInput
-                      key={index}
-                      value={step.text}
-                      onChangeText={text => {
-                        const newSteps = JSON.parse(JSON.stringify(editSteps)); // Глубокое копирование
-                        newSteps[index].text = text;
-                        setEditSteps(newSteps); // Изменения касаются только editSteps
-                      }}
-                      style={styles.textInput}
-                    />
-                  ))}
-                  <Button
-                    title="Save Changes"
-                    onPress={finishEditing} // Сохраняем изменения из временного состояния в основное
-                    color="green"
-                  />
-                  <Button
-                    title="Discard changes"
-                    onPress={confirmDiscardChanges}
-                    color="red"
-                  />
-                </ScrollView>
-              );
-            case DictatePhase.ViewingChanges:
-              return (
-                <>
-                  <Text style={styles.headline}>
-                    Here is your instruction. Would you like to make any
-                    changes?
-                  </Text>
-                  {renderStepsList(steps, 'Steps')}
-                  <View style={styles.buttonContainer}>
-                    <Button title="Edit" onPress={startEditing} color="gray" />
-                    <Button
-                      title="Accept"
-                      onPress={() =>
-                        setDictatePhase(DictatePhase.ReadyToDictate)
-                      }
-                      color="blue"
-                    />
-                  </View>
-                </>
-              );
-            case DictatePhase.ReadyToDictate:
-              return (
-                <View style={styles.dictatePage}>
-                  <Text style={styles.headline}>Ready to Dictate</Text>
-                  <Button
-                    title="Start Dictate"
-                    onPress={handleStartDictate}
-                    color="blue"
-                  />
-                </View>
-              );
-            case DictatePhase.Dictating:
-              return (
-                <View style={styles.dictatePage}>
-                  <Text style={styles.headline}>
-                    Step {currentStepIndex + 1}: {steps[currentStepIndex].text}
-                  </Text>
-                  {countdown !== null && (
-                    <Text style={styles.countdown}>{countdown} s</Text>
-                  )}
-                  <View style={styles.buttonContainer}>
-                    <Button title="Back" onPress={handleBack} color="red" />
-                    <Button
-                      title="Repeat"
-                      onPress={handleRepeat}
-                      color="gray"
-                    />
-                    <Button title="Next" onPress={handleNext} color="blue" />
-                  </View>
-                  <Button
-                    title="Mission Abort"
-                    onPress={handleAbort}
-                    color="red"
-                  />
-                </View>
-              );
-            case DictatePhase.MissionAccomplished:
-              return (
-                <View style={styles.dictatePage}>
-                  <Text style={styles.headline}>Mission Accomplished!</Text>
-                  <Button
-                    title="Begin new task"
-                    onPress={() => {
-                      setDictatePhase(DictatePhase.Creating);
-                      setSteps([]);
-                      setCurrentStepIndex(0); // Также сбрасываем индекс текущего шага
-                    }}
-                    color="blue"
-                  />
-                </View>
-              );
-            default:
-              return null;
-          }
-        })()}
-      </>
-    );
+    switch (dictatePhase) {
+      case DictatePhase.InstructionList:
+        return (
+          <InstructionList
+            instructions={instructions}
+            onSelect={(instruction) => {
+              setSelectedInstruction(instruction);
+              setSteps(instruction.steps);
+              setDictatePhase(DictatePhase.ViewingChanges);
+            }}
+            onCreate={startCreating}
+            onDelete={handleDeleteInstruction}
+            onStart={(instruction) => {
+              setSelectedInstruction(instruction);
+              setSteps(instruction.steps);
+              setDictatePhase(DictatePhase.ReadyToDictate);
+            }}
+          />
+        );
+      case DictatePhase.Creating:
+        return (
+          <>
+            <Text style={styles.headline}>Create your instructions:</Text>
+            
+            <TextInput
+              placeholder="Title"
+              value={currentTitle}
+              onChangeText={setCurrentTitle}
+              style={styles.instructionTitleInput}
+            />
+            <TextInput
+              multiline
+              value={currentStep}
+              onChangeText={setCurrentStep}
+              style={styles.textInput}
+              placeholder="Enter steps, each on a new line"
+            />
+            <View style={styles.creatingButtonContainer}>
+              <Button title="Don't Save" onPress={handleAbort} color="red" />
+              <Button title="Save" onPress={finishCreating} color="green" />
+            </View>
+          </>
+        );
+      case DictatePhase.Editing:
+        return (
+          <ScrollView style={styles.scrollContainer}>
+            <Text style={styles.headline}>Edit your instruction:</Text>
+            <TextInput
+              multiline
+              value={currentTitle}
+              onChangeText={setCurrentTitle}
+              style={styles.instructionTitleInput}
+              placeholder="Enter title"
+            />
+            <TextInput
+              multiline
+              value={currentStep}
+              onChangeText={setCurrentStep}
+              style={styles.textInput}
+              placeholder="Enter steps, new line for each step"
+            />
+            <Button title="Save Changes" onPress={finishEditing} color="green" />
+            <Button title="Discard changes" onPress={handleAbort} color="red" />
+          </ScrollView>
+        );
+        
+      case DictatePhase.ViewingChanges:
+        return (
+          <>
+            <Text style={styles.headline}>
+              Here is your instruction. Would you like to make any changes?
+            </Text>
+            <Text style={styles.instructionTitle}>{currentTitle}</Text>
+            {renderStepsList(steps, 'Steps')}
+            <View style={styles.buttonContainer}>
+              <Button title="Edit" onPress={startEditing} color="gray" />
+              <Button
+                title="Accept"
+                onPress={() => setDictatePhase(DictatePhase.ReadyToDictate)}
+                color="blue"
+              />
+            </View>
+          </>
+        );
+      case DictatePhase.ReadyToDictate:
+        return (
+          <View style={styles.dictatePage}>
+            <Text style={styles.headline}>Ready to Dictate</Text>
+            <Button
+              title="Start Dictate"
+              onPress={handleStartDictate}
+              color="green"
+            />
+            <Button
+              title="Back to Instructions"
+              onPress={handleAbort}
+              color="blue"
+            />
+          </View>
+        );
+      case DictatePhase.Dictating:
+        return (
+          <View style={styles.dictatePage}>
+            <Text style={styles.headline}>
+              Step {currentStepIndex + 1}: {steps[currentStepIndex].text}
+            </Text>
+            {countdown !== null && (
+              <Text style={styles.countdown}>{countdown} s</Text>
+            )}
+            <View style={styles.buttonContainer}>
+              <Button title="Back" onPress={handleBack} color="red" />
+              <Button
+                title="Repeat"
+                onPress={handleRepeat}
+                color="gray"
+              />
+              <Button title="Next" onPress={handleNext} color="blue" />
+            </View>
+            <Button
+              title="Mission Abort"
+              onPress={handleAbort}
+              color="red"
+            />
+          </View>
+        );
+      case DictatePhase.MissionAccomplished:
+        return (
+          <View style={styles.dictatePage}>
+            <Text style={styles.headline}>Mission Accomplished!</Text>
+            <Button
+              title="Back to Instructions"
+              onPress={() => {
+                setDictatePhase(DictatePhase.InstructionList);
+              }}
+              color="blue"
+            />
+          </View>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
     <View
       style={[
         styles.container,
-        {paddingTop: insets.top, paddingBottom: insets.bottom},
-      ]}>
+        { paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}
+    >
       <Text style={styles.headline}>Dictator</Text>
       {renderDictatePhase()}
     </View>
