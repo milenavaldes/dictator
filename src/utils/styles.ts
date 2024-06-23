@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   },
 
   textInput: {
-    height: 400,
+    height: 200,
     borderWidth: 1,
     borderColor: 'grey',
     marginBottom: 20,

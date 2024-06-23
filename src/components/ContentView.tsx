@@ -4,7 +4,7 @@ import TTS from '../utils/useTTS';
 import Tts from 'react-native-tts';
 import styles from '../utils/styles';
 import InstructionList from './InstructionList';
-import InstructionEditor from './InstructionEditor';
+// import InstructionEditor from './InstructionEditor';
 import { loadInstructions, saveInstruction, deleteInstruction } from '../utils/storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import uuid from 'react-native-uuid';
@@ -211,6 +211,7 @@ const ContentView: React.FC = () => {
   };
 
   const handleStartDictate = () => {
+    setCurrentStepIndex(0);
     setDictatePhase(DictatePhase.Dictating);
     if (steps.length > 0 && currentStepIndex === 0) {
       TTS.speak(steps[0].text);
@@ -241,7 +242,7 @@ const ContentView: React.FC = () => {
     }
   };
 
-  const handleAbort = () => {
+  const handleBackToInstructions = () => {
     setDictatePhase(DictatePhase.InstructionList);
   };
 
@@ -298,7 +299,7 @@ const ContentView: React.FC = () => {
               placeholder="Enter steps, each on a new line"
             />
             <View style={styles.creatingButtonContainer}>
-              <Button title="Don't Save" onPress={handleAbort} color="red" />
+              <Button title="Don't Save" onPress={handleBackToInstructions} color="red" />
               <Button title="Save" onPress={finishCreating} color="green" />
             </View>
           </>
@@ -355,7 +356,7 @@ const ContentView: React.FC = () => {
             />
             <Button
               title="Back to Instructions"
-              onPress={handleAbort}
+              onPress={handleBackToInstructions}
               color="blue"
             />
           </View>
@@ -380,7 +381,7 @@ const ContentView: React.FC = () => {
             </View>
             <Button
               title="Mission Abort"
-              onPress={handleAbort}
+              onPress={handleBackToInstructions}
               color="red"
             />
           </View>
