@@ -184,15 +184,30 @@ const ContentView: React.FC = () => {
         steps: newSteps,
       };
   
-      saveInstruction(updatedInstruction).then(() => {
-        setInstructions(prev =>
-          prev.map(instr => (instr.id === updatedInstruction.id ? updatedInstruction : instr))
-        );
-        setSelectedInstruction(updatedInstruction);
+      handleSaveInstruction(updatedInstruction).then(() => {
         setSteps(newSteps);
         setDictatePhase(DictatePhase.ViewingChanges);
       });
     }
+  };
+
+  const confirmDiscardChanges = () => {
+    Alert.alert(
+      'Discard Changes',
+      'Are you sure you want to discard your changes?',
+      [
+        {
+          text: 'No',
+          style: 'cancel',
+        },
+        {
+          text: 'Yes',
+          onPress: () => {
+            setDictatePhase(DictatePhase.ViewingChanges);
+          },
+        },
+      ],
+    );
   };
 
   const handleStartDictate = () => {
@@ -307,7 +322,7 @@ const ContentView: React.FC = () => {
               placeholder="Enter steps, new line for each step"
             />
             <Button title="Save Changes" onPress={finishEditing} color="green" />
-            <Button title="Discard changes" onPress={handleAbort} color="red" />
+            <Button title="Discard changes" onPress={confirmDiscardChanges} color="red" />
           </ScrollView>
         );
         
@@ -322,8 +337,8 @@ const ContentView: React.FC = () => {
             <View style={styles.buttonContainer}>
               <Button title="Edit" onPress={startEditing} color="gray" />
               <Button
-                title="Accept"
-                onPress={() => setDictatePhase(DictatePhase.ReadyToDictate)}
+                title="Ok"
+                onPress={() => setDictatePhase(DictatePhase.InstructionList)}
                 color="blue"
               />
             </View>

@@ -5,7 +5,12 @@ const INSTRUCTIONS_KEY = '@instructions';
 export const saveInstruction = async (instruction) => {
   try {
     const instructions = await loadInstructions();
-    instructions.push(instruction);
+    const index = instructions.findIndex(inst => inst.id === instruction.id);
+    if (index !== -1) {
+      instructions[index] = instruction;
+    } else {
+      instructions.push(instruction);
+    }
     await AsyncStorage.setItem(INSTRUCTIONS_KEY, JSON.stringify(instructions));
   } catch (e) {
     console.error('Failed to save instruction:', e);
