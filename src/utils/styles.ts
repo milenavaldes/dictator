@@ -3,14 +3,34 @@ import { StyleSheet } from 'react-native';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    top: 0,
+    margin: 0,
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: '10%',
   },
+
   headline: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 20,
+    justifyContent: 'center',
   },
+
+  header: {
+    width: "200%",
+    height: "10%",
+    backgroundColor: '#8fc95b',
+    marginTop: 0,
+    justifyContent: 'center',
+    paddingHorizontal: 30,
+    marginLeft: -60,
+    top: -30,
+  }, 
+
+  contentBox: {
+    width: "100%",
+    backgroundColor: '#ffffff',
+  },
+
   instructionTitleInput: {
     minHeight: 50,
     borderWidth: 1,
@@ -59,14 +79,29 @@ const styles = StyleSheet.create({
   },
   dictatePage: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
+    paddingTop: 20,
   },
 
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: 20,
+  },
+
+  readyToDictateButtonContainer: {
+    flexDirection: 'column',
+    height: '100%',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    paddingTop: 50,
+    paddingBottom: 50,
+  },
+
+  stepOfSteps: {
+    color: 'grey',
+    fontSize: 18,
   },
 
   creatingButtonContainer: {
@@ -88,7 +123,7 @@ const styles = StyleSheet.create({
   },
 
   countdown: {
-    fontSize: 30,
+    fontSize: 100,
     fontWeight: 'bold',
     color: 'black',
     marginVertical: 10,

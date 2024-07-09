@@ -348,25 +348,29 @@ const ContentView: React.FC = () => {
       case DictatePhase.ReadyToDictate:
         return (
           <View style={styles.dictatePage}>
-            <Text style={styles.headline}>Ready to Dictate</Text>
-            <Button
-              title="Start Dictate"
-              onPress={handleStartDictate}
-              color="green"
-            />
-            <Button
-              title="Back to Instructions"
-              onPress={handleBackToInstructions}
-              color="blue"
-            />
+          <Text style={styles.headline}>Ready to Dictate</Text>
+            <View style={styles.readyToDictateButtonContainer}>
+              <Button
+                title="Start Dictate"
+                onPress={handleStartDictate}
+                color="green"
+              />
+              <Button
+                title="Back to Instructions"
+                onPress={handleBackToInstructions}
+                color="blue"
+              />
+            </View>
           </View>
         );
       case DictatePhase.Dictating:
         return (
           <View style={styles.dictatePage}>
             <Text style={styles.headline}>
-              Step {currentStepIndex + 1}: {steps[currentStepIndex].text}
-            </Text>
+            <Text style={styles.stepOfSteps}>Step {currentStepIndex + 1} of {steps.length}</Text>
+            {'\n'}
+            <Text>{steps[currentStepIndex].text}</Text>
+          </Text>
             {countdown !== null && (
               <Text style={styles.countdown}>{countdown} s</Text>
             )}
@@ -408,7 +412,7 @@ const ContentView: React.FC = () => {
     <View
       style={[
         styles.container,
-        { paddingTop: insets.top, paddingBottom: insets.bottom },
+        //{ paddingTop: insets.top, paddingBottom: insets.bottom },
       ]}
     >
       <Text style={styles.headline}>Dictator</Text>
