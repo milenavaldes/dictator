@@ -61,6 +61,13 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
 
+  textComment: {
+    fontSize: 14,
+    color: 'grey',
+    marginBottom: 20,
+
+  },
+
   list: {
     flexGrow: 0,
     marginBottom: 20,
