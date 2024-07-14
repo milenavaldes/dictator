@@ -3,8 +3,8 @@ import { View, Text, TextInput, Button, FlatList, ScrollView, Alert } from 'reac
 import TTS from '../utils/useTTS';
 import Tts from 'react-native-tts';
 import styles from '../utils/styles';
+import KeepAwake from 'react-native-keep-awake';
 import InstructionList from './InstructionList';
-// import InstructionEditor from './InstructionEditor';
 import { loadInstructions, saveInstruction, deleteInstruction } from '../utils/storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import uuid from 'react-native-uuid';
@@ -48,33 +48,28 @@ const ContentView: React.FC = () => {
       setInstructions(loadedInstructions);
     };
     fetchInstructions();
-
+  
     TTS.initializeTTS('en-US');
-
+  
     const onTTSFinish = () => {
       console.log('TTS finished');
     };
-
+  
     const onTTSStart = () => {
       console.log('TTS started');
     };
-
+  
     Tts.addEventListener('tts-finish', onTTSFinish);
     Tts.addEventListener('tts-start', onTTSStart);
-
-    return () => {
-      Tts.removeAllListeners('tts-finish');
-      Tts.removeAllListeners('tts-start');
-    };
-  }, []);
-
-  useEffect(() => {
+  
+    // Handle dictating phase
     let timer: NodeJS.Timeout;
     if (
       dictatePhase === DictatePhase.Dictating &&
       steps.length > 0 &&
       currentStepIndex < steps.length
     ) {
+      KeepAwake.activate(); // Activate KeepAwake
       TTS.speak(steps[currentStepIndex].text);
       if (steps[currentStepIndex].duration) {
         setCountdown(steps[currentStepIndex].duration ?? null);
@@ -93,14 +88,20 @@ const ContentView: React.FC = () => {
     } else {
       setCountdown(null);
     }
-
+  
     if (dictatePhase === DictatePhase.MissionAccomplished) {
       TTS.speak('Mission accomplished!');
+      KeepAwake.deactivate();
     }
-
+    
     return () => {
-      TTS.stop(); // Останавливаем любую озвучку
+      Tts.removeAllListeners('tts-finish');
+      Tts.removeAllListeners('tts-start');
+      TTS.stop();
       clearInterval(timer);
+      if (dictatePhase === DictatePhase.Dictating) {
+        KeepAwake.deactivate();
+      }
     };
   }, [currentStepIndex, dictatePhase, steps]);
 
@@ -246,6 +247,11 @@ const ContentView: React.FC = () => {
     setDictatePhase(DictatePhase.InstructionList);
   };
 
+  const handleMissionAbort = () => {
+    setDictatePhase(DictatePhase.InstructionList);
+    KeepAwake.deactivate();
+  };
+
   const renderStepsList = (list: Step[], title: string) => (
     <>
       <Text style={styles.headline}>{title}</Text>
@@ -296,8 +302,11 @@ const ContentView: React.FC = () => {
               value={currentStep}
               onChangeText={setCurrentStep}
               style={styles.textInput}
-              placeholder="Enter steps, each on a new line"
+              placeholder="Enter steps, each on a new line."
             />
+            <Text style={styles.textComment}>
+             If you want to add a timer for your step, put the number of seconds in the brackets. {"\n"}Example: 'Continue doing this step for a minute (60)'
+             </Text>
             <View style={styles.creatingButtonContainer}>
               <Button title="Don't Save" onPress={handleBackToInstructions} color="red" />
               <Button title="Save" onPress={finishCreating} color="green" />
@@ -385,7 +394,7 @@ const ContentView: React.FC = () => {
             </View>
             <Button
               title="Mission Abort"
-              onPress={handleBackToInstructions}
+              onPress={handleMissionAbort}
               color="red"
             />
           </View>
@@ -412,7 +421,6 @@ const ContentView: React.FC = () => {
     <View
       style={[
         styles.container,
-        //{ paddingTop: insets.top, paddingBottom: insets.bottom },
       ]}
     >
       <Text style={styles.headline}>Dictator</Text>

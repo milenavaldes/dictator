@@ -74,6 +74,10 @@ const styles = StyleSheet.create({
   listItemText: {
     fontSize: 22,
   },
+  textComment: {
+    fontSize: 12,
+    color: 'gray'
+  },
   scrollContainer: {
     flexGrow: 1,
   },
