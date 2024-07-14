@@ -76,7 +76,8 @@ const styles = StyleSheet.create({
   },
   textComment: {
     fontSize: 12,
-    color: 'gray'
+    color: 'gray',
+    marginBottom: 20,
   },
   scrollContainer: {
     flexGrow: 1,
