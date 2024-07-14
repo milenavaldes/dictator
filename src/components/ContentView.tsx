@@ -298,6 +298,9 @@ const ContentView: React.FC = () => {
               style={styles.textInput}
               placeholder="Enter steps, each on a new line"
             />
+              <Text style={styles.textComment}>
+              If you want to add a timer for your step, put the number of seconds in the brackets. {"\n"}Example: "Continue doing this step for a minute (60)"
+              </Text>
             <View style={styles.creatingButtonContainer}>
               <Button title="Don't Save" onPress={handleBackToInstructions} color="red" />
               <Button title="Save" onPress={finishCreating} color="green" />
@@ -322,6 +325,9 @@ const ContentView: React.FC = () => {
               style={styles.textInput}
               placeholder="Enter steps, new line for each step"
             />
+              <Text style={styles.textComment}>
+              If you want to add a timer for your step, put the number of seconds in the brackets. {"\n"}Example: 'Continue doing this step for a minute (60)'
+              </Text>
             <Button title="Save Changes" onPress={finishEditing} color="green" />
             <Button title="Discard changes" onPress={confirmDiscardChanges} color="red" />
           </ScrollView>
