@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, FlatList, ScrollView, Alert } from 'react-native';
 import TTS from '../utils/useTTS';
 import Tts from 'react-native-tts';
+import SpeechManager from './SpeechManager';
 import styles from '../utils/styles';
 import KeepAwake from 'react-native-keep-awake';
 import InstructionList from './InstructionList';
@@ -42,6 +43,10 @@ const ContentView: React.FC = () => {
 
   const insets = useSafeAreaInsets();
 
+  interface SpeechRecognitionResult {
+    value?: string[];  // Массив распознанных слов или фраз
+  }
+
   useEffect(() => {
     const fetchInstructions = async () => {
       const loadedInstructions = await loadInstructions();
@@ -69,6 +74,21 @@ const ContentView: React.FC = () => {
       steps.length > 0 &&
       currentStepIndex < steps.length
     ) {
+      SpeechManager.startRecognizing();
+    const handleSpeechResult = (result: SpeechRecognitionResult) => {
+      const commands = result.value ? result.value.join(' ').toLowerCase() : '';
+      if (commands.includes('next')) {
+        handleNext();
+      } else if (commands.includes('back')) {
+        handleBack();
+      } else if (commands.includes('repeat')) {
+        handleRepeat();
+      } else if (commands.includes('abort')) {
+        handleMissionAbort();
+      }
+    };
+
+    SpeechManager.onSpeechResults(handleSpeechResult);
       KeepAwake.activate(); // Activate KeepAwake
       TTS.speak(steps[currentStepIndex].text);
       if (steps[currentStepIndex].duration) {
@@ -101,6 +121,7 @@ const ContentView: React.FC = () => {
       clearInterval(timer);
       if (dictatePhase === DictatePhase.Dictating) {
         KeepAwake.deactivate();
+        SpeechManager.stopRecognizing();
       }
     };
   }, [currentStepIndex, dictatePhase, steps]);
