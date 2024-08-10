@@ -1,4 +1,4 @@
-import Voice from '@react-native-voice/voice';
+import Voice from '@react-native-community/voice';
 
 interface SpeechResult {
   value?: string[];
@@ -6,7 +6,17 @@ interface SpeechResult {
 }
 
 const SpeechManager = {
-  startRecognizing: async (): Promise<void> => {
+  initialize: () => {
+    Voice.onSpeechStart = () => console.log('Listening started');
+    Voice.onSpeechEnd = () => console.log('Listening stopped');
+    Voice.onSpeechError = (error) => console.error('Speech recognition error:', error);
+  },
+
+  destroy: () => {
+    Voice.destroy().then(Voice.removeAllListeners);
+  },
+
+  startRecognizing: async () => {
     try {
       await Voice.start('en-US');
     } catch (e) {
@@ -14,14 +24,14 @@ const SpeechManager = {
     }
   },
 
-  onSpeechResults: (callback: (result: SpeechResult) => void): void => {
-    Voice.onSpeechResults = (e: SpeechResult) => {
-      console.log('onSpeechResults: ', e);
-      callback(e);
+  onSpeechResults: (callback: (result: SpeechResult) => void) => {
+    Voice.onSpeechResults = (result) => {
+      console.log('onSpeechResults: ', result);
+      callback(result);
     };
   },
 
-  stopRecognizing: async (): Promise<void> => {
+  stopRecognizing: async () => {
     try {
       await Voice.stop();
     } catch (e) {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, FlatList, ScrollView, Alert } from 'react-native';
+import AudioSession from 'react-native-audio-session';
 import TTS from '../utils/useTTS';
 import Tts from 'react-native-tts';
 import SpeechManager from './SpeechManager';
@@ -31,6 +32,14 @@ interface Instruction {
   steps: Step[];
 }
 
+interface SpeechRecognitionResult {
+  value?: string[];  // Массив распознанных слов или фраз
+}
+
+const CustomAudioCategory = 'playAndRecord' as any;
+const CustomAudioMode = 'default' as any;
+const CustomAudioCategoryOptions: any = ['defaultToSpeaker', 'allowBluetooth'];
+
 const ContentView: React.FC = () => {
   const [currentTitle, setCurrentTitle] = useState<string>('');
   const [currentStep, setCurrentStep] = useState<string>('');
@@ -43,30 +52,59 @@ const ContentView: React.FC = () => {
 
   const insets = useSafeAreaInsets();
 
-  interface SpeechRecognitionResult {
-    value?: string[];  // Массив распознанных слов или фраз
-  }
-
   useEffect(() => {
     const fetchInstructions = async () => {
       const loadedInstructions = await loadInstructions();
       setInstructions(loadedInstructions);
     };
     fetchInstructions();
-  
+
     TTS.initializeTTS('en-US');
-  
+
+    const configureAudioSession = async () => {
+      try {
+        // Замените 'Playback', 'VoiceChat', и 'MixWithOthers' на нужные значения
+        await AudioSession.setCategoryAndMode('Playback', 'VoiceChat', 'MixWithOthers');
+        console.log('Audio session configured');
+      } catch (error) {
+        console.error('Failed to configure audio session:', error);
+      }
+    };
+
     const onTTSFinish = () => {
       console.log('TTS finished');
+      SpeechManager.startRecognizing();
+      console.log('Listening started after TTS');
     };
-  
+
     const onTTSStart = () => {
       console.log('TTS started');
     };
-  
+
     Tts.addEventListener('tts-finish', onTTSFinish);
     Tts.addEventListener('tts-start', onTTSStart);
-  
+
+    const handleSpeechResult = (result: SpeechRecognitionResult) => {
+      console.log('Received speech results:', result);
+      const commands = result.value ? result.value.join(' ').toLowerCase() : '';
+      if (commands.includes('next')) {
+        console.log('Command "next" recognized');
+        handleNext();
+      } else if (commands.includes('back')) {
+        console.log('Command "back" recognized');
+        handleBack();
+      } else if (commands.includes('repeat')) {
+        console.log('Command "repeat" recognized');
+        handleRepeat();
+      } else if (commands.includes('abort')) {
+        console.log('Command "abort" recognized');
+        handleMissionAbort();
+      }
+    };
+
+    // Инициализация распознавания речи
+    SpeechManager.onSpeechResults(handleSpeechResult);
+
     // Handle dictating phase
     let timer: NodeJS.Timeout;
     if (
@@ -74,22 +112,10 @@ const ContentView: React.FC = () => {
       steps.length > 0 &&
       currentStepIndex < steps.length
     ) {
-      SpeechManager.startRecognizing();
-    const handleSpeechResult = (result: SpeechRecognitionResult) => {
-      const commands = result.value ? result.value.join(' ').toLowerCase() : '';
-      if (commands.includes('next')) {
-        handleNext();
-      } else if (commands.includes('back')) {
-        handleBack();
-      } else if (commands.includes('repeat')) {
-        handleRepeat();
-      } else if (commands.includes('abort')) {
-        handleMissionAbort();
-      }
-    };
-
-    SpeechManager.onSpeechResults(handleSpeechResult);
+      configureAudioSession();
+      console.log('Starting recognition for dictating phase');
       KeepAwake.activate(); // Activate KeepAwake
+      console.log(`Speaking step: ${steps[currentStepIndex].text}`);
       TTS.speak(steps[currentStepIndex].text);
       if (steps[currentStepIndex].duration) {
         setCountdown(steps[currentStepIndex].duration ?? null);
@@ -99,6 +125,7 @@ const ContentView: React.FC = () => {
               return prevCountdown - 1;
             } else {
               clearInterval(timer);
+              console.log('Interval cleared, moving to the next step');
               handleNext();
               return null;
             }
@@ -108,18 +135,21 @@ const ContentView: React.FC = () => {
     } else {
       setCountdown(null);
     }
-  
+
     if (dictatePhase === DictatePhase.MissionAccomplished) {
+      console.log('Mission accomplished!');
       TTS.speak('Mission accomplished!');
       KeepAwake.deactivate();
     }
-    
+
     return () => {
+      console.log('Cleaning up: Removing TTS listeners and stopping TTS');
       Tts.removeAllListeners('tts-finish');
       Tts.removeAllListeners('tts-start');
       TTS.stop();
       clearInterval(timer);
       if (dictatePhase === DictatePhase.Dictating) {
+        console.log('Deactivating Keep Awake and stopping recognition');
         KeepAwake.deactivate();
         SpeechManager.stopRecognizing();
       }
