@@ -1,18 +1,26 @@
 import Voice from '@react-native-community/voice';
 
-interface SpeechResult {
+interface SpeechRecognitionResult {
   value?: string[];
   error?: any;
 }
 
 const SpeechManager = {
-  initialize: () => {
-    Voice.onSpeechStart = () => console.log('Listening started');
-    Voice.onSpeechEnd = () => console.log('Listening stopped');
-    Voice.onSpeechError = (error) => console.error('Speech recognition error:', error);
+    initialize: (handleSpeechResults: (result: SpeechRecognitionResult) => void) => {
+    Voice.onSpeechStart = () => {
+      console.log('<SpeechManager> Listening started');
+    };
+    Voice.onSpeechEnd = () => console.log('<SpeechManager> Listening stopped');
+    Voice.onSpeechError = (error: any) => console.error('<SpeechManager> Speech recognition error:', error);
+    Voice.onSpeechResults = (result: SpeechRecognitionResult) => {
+        console.log('<SpeechManager> onSpeechResults: ', result);
+      if (result.value) {
+        handleSpeechResults(result);
+      }
+    };
   },
 
-  destroy: () => {
+  destroy: async () => {
     Voice.destroy().then(Voice.removeAllListeners);
   },
 
@@ -20,22 +28,15 @@ const SpeechManager = {
     try {
       await Voice.start('en-US');
     } catch (e) {
-      console.error('Error starting voice recognition:', e);
+      console.error('<SpeechManager> Error starting voice recognition:', e);
     }
-  },
-
-  onSpeechResults: (callback: (result: SpeechResult) => void) => {
-    Voice.onSpeechResults = (result) => {
-      console.log('onSpeechResults: ', result);
-      callback(result);
-    };
   },
 
   stopRecognizing: async () => {
     try {
       await Voice.stop();
     } catch (e) {
-      console.error('Error stopping voice recognition:', e);
+      console.error('<SpeechManager> Error stopping voice recognition:', e);
     }
   }
 };
