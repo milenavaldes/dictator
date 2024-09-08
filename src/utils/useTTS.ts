@@ -1,13 +1,21 @@
 import Tts from 'react-native-tts';
 
+type TtsEvents = 'tts-start' | 'tts-finish' | 'tts-progress';
+
 const initializeTTS = (language: string = 'en-US') => {
   Tts.setDefaultLanguage(language);
   Tts.setDefaultRate(0.5);
   Tts.setDefaultPitch(1.0);
 };
 
-const setLanguage = (language: string) => {
-  Tts.setDefaultLanguage(language);
+const addListener = (event: TtsEvents, handler: () => void) => {
+  Tts.addListener(event, handler); // Используем addListener
+};
+
+const removeAllListeners = () => {
+  Tts.removeAllListeners('tts-start');
+  Tts.removeAllListeners('tts-finish');
+  Tts.removeAllListeners('tts-progress');
 };
 
 const speak = (text: string) => {
@@ -20,7 +28,9 @@ const stop = () => {
 
 export default {
   initializeTTS,
-  setLanguage,
+  addListener,
+  removeAllListeners,
   speak,
   stop,
 };
+
