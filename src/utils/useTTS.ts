@@ -9,11 +9,13 @@ const initializeTTS = (language: string = 'en-US') => {
 };
 
 const addListener = (event: TtsEvents, handler: () => void) => {
-  Tts.addEventListener(event, handler);
+  Tts.addListener(event, handler); // Используем addListener
 };
 
-const removeListener = (event: TtsEvents, handler: () => void) => {
-  Tts.removeEventListener(event, handler);
+const removeAllListeners = () => {
+  Tts.removeAllListeners('tts-start');
+  Tts.removeAllListeners('tts-finish');
+  Tts.removeAllListeners('tts-progress');
 };
 
 const speak = (text: string) => {
@@ -27,7 +29,8 @@ const stop = () => {
 export default {
   initializeTTS,
   addListener,
-  removeListener,
+  removeAllListeners,
   speak,
   stop,
 };
+
