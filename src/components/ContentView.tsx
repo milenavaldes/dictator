@@ -107,8 +107,8 @@ useEffect(() => {
       } else if (commands.includes('repeat')) {
         console.log('Command "repeat" recognized'); 
         handleRepeat();
-      } else if (commands.includes('abort')) {
-        console.log('Command "abort" recognized');
+      } else if (commands.includes('exit')) {
+        console.log('Command "exit" recognized');
         handleMissionAbort();
       } else {
         console.log('Command was not recognized');
@@ -488,7 +488,7 @@ useEffect(() => {
               <Button title="Next" onPress={handleNext} color="blue" />
             </View>
             <Button
-              title="Mission Abort"
+              title="Exit"
               onPress={handleMissionAbort}
               color="red"
             />
