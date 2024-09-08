@@ -1,8 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, FlatList, ScrollView, Alert } from 'react-native';
-import AudioSession from 'react-native-audio-session';
 import TTS from '../utils/useTTS';
-import Tts from 'react-native-tts';
 import SpeechManager from './SpeechManager';
 import styles from '../utils/styles';
 import KeepAwake from 'react-native-keep-awake';
