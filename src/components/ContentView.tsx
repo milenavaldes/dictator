@@ -44,6 +44,7 @@ const ContentView: React.FC = () => {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [dictatePhase, setDictatePhase] = useState<DictatePhase>(DictatePhase.InstructionList);
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
+  const [repeatTrigger, setRepeatTrigger] = useState(false);
 
 
   // // TTS Initializer
@@ -85,6 +86,27 @@ const ContentView: React.FC = () => {
     };
     fetchInstructions();
   }, []);
+
+  useEffect(() => {
+    // Ваш код для повторного воспроизведения текущего шага
+    if (repeatTrigger) {
+      // Здесь можете вызвать ваш код, который нужно выполнить при перезапуске
+      console.log('Repeat triggered');
+      
+      // Например, остановка и запуск распознавания:
+      SpeechManager.stopRecognizing();
+      setTimeout(() => {
+        SpeechManager.startRecognizing(); 
+        TTS.speak(steps[currentStepIndex].text);
+        
+      }, 500);
+      
+
+      // setTimeout(() => {
+      //   SpeechManager.startRecognizing();
+      // }, 500);
+    }
+  }, [repeatTrigger]); 
 
 // useEffect(() => {
 //   const handleSpeechResults = (result: SpeechRecognitionResult) => {
@@ -142,30 +164,16 @@ const ContentView: React.FC = () => {
 
   useEffect(() => {
         let timer: NodeJS.Timeout;
-        if (dictatePhase === DictatePhase.Dictating && steps.length > 0 && currentStepIndex < steps.length) {
+        if (dictatePhase === DictatePhase.Dictating && steps.length > 0 && currentStepIndex <= steps.length) {
 
-          if (dictatePhase === DictatePhase.Dictating) {
-            KeepAwake.activate();
-            AudioSession.setCategoryAndMode('Playback', 'VoiceChat', 'MixWithOthers').catch(console.error);
-          } else if (dictatePhase === DictatePhase.MissionAccomplished) {
-            KeepAwake.deactivate();
-          } 
 
           const handleTTSStart = () => console.log('TTS started');
           const handleTTSFinish = () => console.log('TTS finished');
           const handleTTSProgress = () => console.log('TTS progress');
 
-          KeepAwake.activate();
-
           TTS.addListener('tts-start', handleTTSStart);
           TTS.addListener('tts-finish', handleTTSFinish);
           TTS.addListener('tts-progress', handleTTSProgress);
-
-          
-          
-          setTimeout(() => {
-            TTS.speak(steps[currentStepIndex].text); 
-          }, 0); // Delay TTS to ensure cleanup and setup are complete
 
           const handleSpeechResults = (result: SpeechRecognitionResult) => {
             console.log('Received speech results:', result);
@@ -195,6 +203,19 @@ const ContentView: React.FC = () => {
           console.log('SpeechManager.startRecognizing()');
           console.log('Starting recognition for dictating phase');
           console.log(`Speaking step: ${steps[currentStepIndex].text}`);
+
+          KeepAwake.activate();
+
+          // TTS.speak(steps[currentStepIndex].text);
+
+          setTimeout(() => {
+            TTS.speak(steps[currentStepIndex].text); 
+          }, 500); // Delay TTS to ensure cleanup and setup are complete
+
+
+          
+          
+          
           
           // Timer
           if (steps[currentStepIndex].duration) {
@@ -373,46 +394,23 @@ const ContentView: React.FC = () => {
     }
   };
 
-  // const handleNext = () => {
-  //   console.log(`Before incrementing: currentStepIndex=${currentStepIndex}, steps.length=${steps.length}`);
-
-  //   SpeechManager.stopRecognizing(); // Остановка распознавания перед переходом на следующий шаг
-  
-  //   const nextIndex = currentStepIndex + 1;
-  
-  //   if (nextIndex < steps.length) {
-  //     console.log('Next step index:', nextIndex, 'Step text:', steps[nextIndex]?.text);
-  //     setCurrentStepIndex(nextIndex);
-      
-  //     // Запуск TTS с небольшой задержкой для предотвращения перекрытия с остановкой распознавания
-  //     setTimeout(() => {
-  //       TTS.speak(steps[nextIndex].text);
-  //       setTimeout(() => {
-  //         SpeechManager.startRecognizing();
-  //       }, 500); // Дополнительная задержка перед перезапуском распознавания
-  //     }, 100); // Задержка перед запуском TTS, чтобы избежать конфликтов
-  //   } else {
-  //     console.log('All steps completed, switching to MissionAccomplished phase.');
-  //     setDictatePhase(DictatePhase.MissionAccomplished);
-  //   }
-  // };
-  
-  
-  
-
   const handleBack = () => {
+    SpeechManager.stopRecognizing();
+
     const backIndex = currentStepIndex - 1;
     if (backIndex >= 0) {
       setCurrentStepIndex(backIndex);
+      setTimeout(() => {
+        SpeechManager.startRecognizing();  // Перезапускаем распознавание после небольшой задержки
+      }, 500);
     } else {
-      TTS.speak(steps[currentStepIndex].text);
+      setDictatePhase(DictatePhase.MissionAccomplished);
     }
   };
 
+
   const handleRepeat = () => {
-    if (currentStepIndex < steps.length) {
-      TTS.speak(steps[currentStepIndex].text); // Повторно прочитать текущий шаг
-    }
+    setRepeatTrigger(prev => !prev);
   };
 
   const handleBackToInstructions = () => {
