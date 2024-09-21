@@ -70,16 +70,6 @@ const ContentView: React.FC = () => {
     );
   };
 
-  // const onSelect = (instruction: Instruction) => {
-  //   console.log('Editing instruction:', instruction);
-  //   // Логика редактирования
-  // };
-
-  // const onStart = (instruction: Instruction) => {
-  //   console.log('Starting instruction:', instruction);
-  //   // Логика старта инструкции
-  // };
-
 
   // Instructions
 useEffect(() => {
@@ -512,6 +502,12 @@ useEffect(() => {
         return (
           <View style={styles.dictatePage}>
 
+            <Button
+              title="Exit"
+              onPress={handleMissionAbort}
+              color="red"
+            />
+
             {countdown !== null && (
               <Text style={styles.countdown}>{countdown} s</Text>
             )}
@@ -533,11 +529,6 @@ useEffect(() => {
                 <Image source={assets.buttonNext} />
               </TouchableOpacity>
             </View>
-            <Button
-              title="Exit"
-              onPress={handleMissionAbort}
-              color="red"
-            />
           </View>
         );
       case DictatePhase.MissionAccomplished:
