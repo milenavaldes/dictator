@@ -11,8 +11,13 @@ const styles = StyleSheet.create({
 
   headline: {
     fontSize: 20,
-    fontWeight: 'bold',
-    justifyContent: 'center',
+    justifyContent: 'center'
+  },
+
+  dictatingTextContainer: {
+    height: '60%',
+    width: '100%',
+    top: 0,
   },
 
   header: {
@@ -31,6 +36,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
 
+  stepTextDictating: {
+    fontSize: 20,
+    justifyContent: "flex-start",
+    marginBottom: 10,
+  },
+
   instructionTitleInput: {
     minHeight: 50,
     borderWidth: 1,
@@ -41,7 +52,7 @@ const styles = StyleSheet.create({
   },
 
   instructionTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
   },
@@ -81,11 +92,7 @@ const styles = StyleSheet.create({
   listItemText: {
     fontSize: 22,
   },
-  textComment: {
-    fontSize: 12,
-    color: 'gray',
-    marginBottom: 20,
-  },
+
   scrollContainer: {
     flexGrow: 1,
   },
@@ -96,7 +103,21 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
 
-  buttonContainer: {
+  editingButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+  },
+
+  dictatingButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: "space-between",
+    marginTop: 0,
+    marginBottom: 20,
+    width: '100%'
+  },
+
+  instructionButtonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: 20,
@@ -114,6 +135,7 @@ const styles = StyleSheet.create({
   stepOfSteps: {
     color: 'grey',
     fontSize: 18,
+    textAlign: "center",
   },
 
   creatingButtonContainer: {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, FlatList, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, ScrollView, Alert, TouchableOpacity, Image } from 'react-native';
 import TTS from '../utils/useTTS';
 import SpeechManager from './SpeechManager';
 import styles from '../utils/styles';
@@ -43,56 +43,96 @@ const ContentView: React.FC = () => {
   const [dictatePhase, setDictatePhase] = useState<DictatePhase>(DictatePhase.InstructionList);
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
   const [repeatTrigger, setRepeatTrigger] = useState(false);
+  const assets = {
+    buttonBack: require('../utils/assets/icons/buttonBack.png'),
+    buttonRepeat: require('../utils/assets/icons/buttonRepeat.png'),
+    buttonNext: require('../utils/assets/icons/buttonNext.png'),
+  };
+
+  const confirmDeleteInstruction = (id: string) => {
+    Alert.alert(
+      'Delete Instruction',
+      'Are you sure you want to delete this instruction?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: () => {
+            setInstructions(prev => prev.filter(instruction => instruction.id !== id));
+          },
+          style: 'destructive',
+        },
+      ],
+      { cancelable: true },
+    );
+  };
+
+  // const onSelect = (instruction: Instruction) => {
+  //   console.log('Editing instruction:', instruction);
+  //   // Логика редактирования
+  // };
+
+  // const onStart = (instruction: Instruction) => {
+  //   console.log('Starting instruction:', instruction);
+  //   // Логика старта инструкции
+  // };
 
 
   // Instructions
-  useEffect(() => {
-    const fetchInstructions = async () => {
-      const loadedInstructions = await loadInstructions();
-      setInstructions(loadedInstructions);
-    };
-    fetchInstructions();
-  }, []);
+useEffect(() => {
+  const fetchInstructions = async () => {
+    const loadedInstructions = await loadInstructions();
+    setInstructions(loadedInstructions);
+  };
+  fetchInstructions();
+}, []);
 
-  // useEffect for REPEAT
-  useEffect(() => {
-    if (repeatTrigger) {
-      console.log('Repeat triggered');
+// useEffect for REPEAT
+useEffect(() => {
+  if (repeatTrigger) {
+    console.log('Repeat triggered');
+    
+    SpeechManager.stopRecognizing();
+    setTimeout(() => {
+      SpeechManager.startRecognizing(); 
+      TTS.speak(steps[currentStepIndex].text);
       
-      SpeechManager.stopRecognizing();
-      setTimeout(() => {
-        SpeechManager.startRecognizing(); 
-        TTS.speak(steps[currentStepIndex].text);
-        
-      }, 500);
-    }
-  }, [repeatTrigger]); 
+    }, 500);
+  }
+}, [repeatTrigger]); 
 
 
 useEffect(() => {
   let timer: NodeJS.Timeout;
 
-  if (dictatePhase === DictatePhase.Dictating && steps.length > 0 && currentStepIndex <= steps.length) {
+  // Если фаза диктовки активна и есть шаги для диктовки
+  if (dictatePhase === DictatePhase.Dictating && steps.length > 0 && currentStepIndex < steps.length) {
+
+    // Обработчик старта TTS
     const handleTTSStart = () => {
       console.log('TTS started');
       SpeechManager.destroy(); // Полностью останавливаем распознавание речи
       console.log('Speech recognition completely stopped during TTS');
     };
-    
+
+    // Обработчик завершения TTS
     const handleTTSFinish = () => {
       console.log('TTS finished');
-      SpeechManager.initialize(handleSpeechResults); // Заново инициализируем распознавание
-      SpeechManager.startRecognizing(); // Запускаем распознавание после TTS
+      // Инициализация и запуск распознавания речи после завершения TTS
+      SpeechManager.initialize(handleSpeechResults); 
+      SpeechManager.startRecognizing(); 
       console.log('Speech recognition restarted after TTS');
     };
 
+    // Обработчик старта распознавания речи
     const handleSpeechStart = () => {
       console.log('Speech recognition started');
     };
 
-    TTS.addListener('tts-start', handleTTSStart);
-    TTS.addListener('tts-finish', handleTTSFinish);
-
+    // Обработчик результатов распознавания речи
     const handleSpeechResults = (result: SpeechRecognitionResult) => {
       console.log('Received speech results:', result);
       const commands = result.value ? result.value.join(' ').toLowerCase() : '';
@@ -103,7 +143,7 @@ useEffect(() => {
         console.log('Command "back" recognized');
         handleBack();
       } else if (commands.includes('repeat')) {
-        console.log('Command "repeat" recognized'); 
+        console.log('Command "repeat" recognized');
         handleRepeat();
       } else if (commands.includes('exit')) {
         console.log('Command "exit" recognized');
@@ -114,20 +154,37 @@ useEffect(() => {
       }
     };
 
+    // Обработчик ошибок распознавания речи (например, тайм-аут)
+    const handleRecognitionError = (error: { message: string; code?: string }) => {
+      if (error.message === "203/Retry" || error.code === "recognition_fail") {
+        console.log("Speech recognition timed out, restarting...");
+        // Перезапуск распознавания после тайм-аута
+        SpeechManager.stopRecognizing();
+        setTimeout(() => {
+          SpeechManager.startRecognizing();
+        }, 1000); // Небольшая задержка перед перезапуском
+      }
+    };
+
+    // Добавляем слушателей для TTS
+    TTS.addListener('tts-start', handleTTSStart);
+    TTS.addListener('tts-finish', handleTTSFinish);
+
+    // Инициализация и запуск распознавания речи
     SpeechManager.initialize(handleSpeechResults);
     console.log('SpeechManager initialized');
     SpeechManager.startRecognizing();
-    console.log('SpeechManager.startRecognizing()');
-    console.log('Starting recognition for dictating phase');
+    console.log('SpeechManager initialized and started recognizing');
     console.log(`Speaking step: ${steps[currentStepIndex].text}`);
 
-    KeepAwake.activate();
+    KeepAwake.activate(); // Оставляем экран активным
 
+    // Задержка перед началом TTS, чтобы завершить все инициализации
     setTimeout(() => {
-      TTS.speak(steps[currentStepIndex].text); 
-    }, 500); // Delay TTS to ensure cleanup and setup are complete
-      
-    // Timer
+      TTS.speak(steps[currentStepIndex].text);
+    }, 500); 
+
+    // Таймер для шагов, если у шага есть продолжительность
     if (steps[currentStepIndex].duration) {
       setCountdown(steps[currentStepIndex].duration ?? null);
       timer = setInterval(() => {
@@ -144,29 +201,32 @@ useEffect(() => {
       }, 1000);
     }
   } else {
+    // Обнуляем таймер, если не в фазе диктовки
     setCountdown(null);
   }
 
+  // Обработка фазы завершения миссии
   if (dictatePhase === DictatePhase.MissionAccomplished) {
     console.log('Mission accomplished!');
-  
+
     const handleTTSStart = () => {
       console.log('TTS started for Mission Accomplished');
     };
-  
+
     const handleTTSFinish = () => {
       console.log('TTS finished for Mission Accomplished');
       TTS.removeAllListeners(); // Удаляем слушателей после завершения
     };
-  
+
     // Добавляем временные слушатели
     TTS.addListener('tts-start', handleTTSStart);
     TTS.addListener('tts-finish', handleTTSFinish);
-  
+
     TTS.speak('Mission accomplished!');
     KeepAwake.deactivate();
   }
 
+  // Очистка ресурсов при выходе из фазы
   return () => {
     SpeechManager.destroy();
     console.log('Cleaning up: Removing TTS listeners and stopping TTS');
@@ -267,8 +327,8 @@ useEffect(() => {
 
   const confirmDiscardChanges = () => {
     Alert.alert(
-      'Discard Changes',
-      'Are you sure you want to discard your changes?',
+      "Don't Save",
+      "Are you sure you don't want to Save?",
       [
         {
           text: 'No',
@@ -291,11 +351,6 @@ useEffect(() => {
     console.log('setCurrentStepIndex(0)');
     setDictatePhase(DictatePhase.Dictating);
     console.log('setDictatePhase(DictatePhase.Dictating)');
-    // if (steps.length > 0 && currentStepIndex === 0) {
-    //   console.log('TTS.speak from handleStartDictate:', steps[0].text);
-    //   TTS.speak(steps[0].text);
-    //   console.log('TTS.speak from handleStartDictate');
-    // }
   }; 
 
   
@@ -424,12 +479,15 @@ useEffect(() => {
               <Text style={styles.textComment}>
              If you want to add a timer for your step, put the number of seconds in the brackets. {"\n"}Example: "Continue doing this step for a minute (60)"
              </Text>
-            <Button title="Save Changes" onPress={finishEditing} color="green" />
-            <Button title="Discard changes" onPress={confirmDiscardChanges} color="red" />
+             <View style={styles.editingButtonContainer}>
+             <Button title="Don't Save" onPress={confirmDiscardChanges} color="red" />
+            <Button title="Save" onPress={finishEditing} color="green" />
+            </View>
           </ScrollView>
         );
         
       case DictatePhase.ViewingChanges:
+
         return (
           <>
             <Text style={styles.headline}>
@@ -437,53 +495,43 @@ useEffect(() => {
             </Text>
             <Text style={styles.instructionTitle}>{currentTitle}</Text>
             {renderStepsList(steps, 'Steps')}
-            <View style={styles.buttonContainer}>
+            <View style={styles.instructionButtonContainer}>
+              <Button title="Delete" onPress={() => confirmDeleteInstruction(selectedInstruction?.id ?? '')} color="red" />
               <Button title="Edit" onPress={startEditing} color="gray" />
               <Button
-                title="Ok"
+                title="Back"
                 onPress={() => setDictatePhase(DictatePhase.InstructionList)}
                 color="blue"
               />
+              
+              <Button title="Start" onPress={handleStartDictate} color="green" />
             </View>
           </>
-        );
-      case DictatePhase.ReadyToDictate:
-        return (
-          <View style={styles.dictatePage}>
-          <Text style={styles.headline}>Ready to Dictate</Text>
-            <View style={styles.readyToDictateButtonContainer}>
-              <Button
-                title="Start Dictate"
-                onPress={handleStartDictate}
-                color="green"
-              />
-              <Button
-                title="Back to Instructions"
-                onPress={handleBackToInstructions}
-                color="blue"
-              />
-            </View>
-          </View>
         );
       case DictatePhase.Dictating:
         return (
           <View style={styles.dictatePage}>
-            <Text style={styles.headline}>
-            <Text style={styles.stepOfSteps}>Step {currentStepIndex + 1} of {steps.length}</Text>
-            {'\n'}
-            <Text>{steps[currentStepIndex].text}</Text>
-          </Text>
+
             {countdown !== null && (
               <Text style={styles.countdown}>{countdown} s</Text>
             )}
-            <View style={styles.buttonContainer}>
-              <Button title="Back" onPress={handleBack} color="red" />
-              <Button
-                title="Repeat"
-                onPress={handleRepeat}
-                color="gray"
-              />
-              <Button title="Next" onPress={handleNext} color="blue" />
+            <Text style={styles.dictatingTextContainer}>
+              <Text style={styles.stepOfSteps}>Step {currentStepIndex + 1} of {steps.length}</Text>
+              {'\n'}
+              <Text style={styles.stepTextDictating}>{steps[currentStepIndex].text}</Text>
+            </Text>
+
+        
+            <View style={styles.dictatingButtonContainer}>
+              <TouchableOpacity onPress={handleBack}>
+                <Image source={assets.buttonBack} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleRepeat}>
+                <Image source={assets.buttonRepeat} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleNext}>
+                <Image source={assets.buttonNext} />
+              </TouchableOpacity>
             </View>
             <Button
               title="Exit"
