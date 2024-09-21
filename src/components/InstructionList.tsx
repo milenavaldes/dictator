@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, FlatList, Text, Button, Alert } from 'react-native';
+import { TouchableOpacity, View, FlatList, Text, Button, Alert } from 'react-native';
 import styles from '../utils/styles';
 
 interface Step {
@@ -21,26 +21,7 @@ interface InstructionListProps {
   onStart: (instruction: Instruction) => void;
 }
 
-const InstructionList: React.FC<InstructionListProps> = ({ instructions, onSelect, onCreate, onDelete, onStart }) => {
-
-  const confirmDeleteInstruction = (id: string) => {
-    Alert.alert(
-      'Delete Instruction',
-      'Are you sure you want to delete this instruction?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          onPress: () => onDelete(id),
-          style: 'destructive',
-        },
-      ],
-      { cancelable: true },
-    );
-  };
+const InstructionList: React.FC<InstructionListProps> = ({ instructions, onSelect, onCreate}) => {
 
   return (
     <View style={styles.container}>
@@ -52,12 +33,9 @@ const InstructionList: React.FC<InstructionListProps> = ({ instructions, onSelec
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.listItem}>
-            <Text style={styles.listItemText}>{item.title}</Text>
-            <View style={styles.listInstructionButtonContainer}>
-            <Button title="Delete" onPress={() => confirmDeleteInstruction(item.id)} color="red" />
-            <Button title="Edit" onPress={() => onSelect(item)} />
-            <Button title="Start" onPress={() => onStart(item)} color="green" />
-            </View>
+            <TouchableOpacity onPress={() => onSelect(item)}>
+              <Text style={styles.listItemText}>{item.title}</Text>
+            </TouchableOpacity>
           </View>
         )}
         style={styles.list}
