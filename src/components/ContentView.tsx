@@ -70,16 +70,6 @@ const ContentView: React.FC = () => {
     );
   };
 
-  // const onSelect = (instruction: Instruction) => {
-  //   console.log('Editing instruction:', instruction);
-  //   // Логика редактирования
-  // };
-
-  // const onStart = (instruction: Instruction) => {
-  //   console.log('Starting instruction:', instruction);
-  //   // Логика старта инструкции
-  // };
-
 
   // Instructions
 useEffect(() => {
@@ -107,6 +97,34 @@ useEffect(() => {
 
 useEffect(() => {
   let timer: NodeJS.Timeout;
+  let restartTimeout: NodeJS.Timeout;
+  let isRestarting = false; // Флаг для предотвращения частых перезапусков
+
+  const startListening = () => {
+    if (!isRestarting) {
+      isRestarting = true;
+      // Перезапуск распознавания речи через 50 секунд
+      restartTimeout = setTimeout(() => {
+        console.log('Restarting speech recognition to avoid timeout');
+        SpeechManager.stopRecognizing().then(() => {
+          // Ожидание завершения всех процессов
+          setTimeout(() => {
+            SpeechManager.startRecognizing().then(() => {
+              isRestarting = false; // Сброс флага после успешного запуска
+            }).catch((error) => {
+              console.error('Error starting recognition:', error);
+              isRestarting = false; // Сброс флага даже в случае ошибки
+            });
+          }, 2000); // Увеличенная задержка между остановкой и запуском
+        }).catch((error) => {
+          console.error('Error stopping recognition:', error);
+          isRestarting = false; // Сброс флага даже в случае ошибки
+        });
+      }, 50000); // Перезапуск каждые 50 секунд
+    } else {
+      console.log('Already restarting, skipping...');
+    }
+  };
 
   // Если фаза диктовки активна и есть шаги для диктовки
   if (dictatePhase === DictatePhase.Dictating && steps.length > 0 && currentStepIndex < steps.length) {
@@ -115,6 +133,7 @@ useEffect(() => {
     const handleTTSStart = () => {
       console.log('TTS started');
       SpeechManager.destroy(); // Полностью останавливаем распознавание речи
+      clearTimeout(restartTimeout); // Очищаем таймер перезапуска
       console.log('Speech recognition completely stopped during TTS');
     };
 
@@ -123,13 +142,9 @@ useEffect(() => {
       console.log('TTS finished');
       // Инициализация и запуск распознавания речи после завершения TTS
       SpeechManager.initialize(handleSpeechResults); 
-      SpeechManager.startRecognizing(); 
+      SpeechManager.startRecognizing();
+      startListening(); // Запуск перезапуска после завершения TTS
       console.log('Speech recognition restarted after TTS');
-    };
-
-    // Обработчик старта распознавания речи
-    const handleSpeechStart = () => {
-      console.log('Speech recognition started');
     };
 
     // Обработчик результатов распознавания речи
@@ -154,18 +169,6 @@ useEffect(() => {
       }
     };
 
-    // Обработчик ошибок распознавания речи (например, тайм-аут)
-    const handleRecognitionError = (error: { message: string; code?: string }) => {
-      if (error.message === "203/Retry" || error.code === "recognition_fail") {
-        console.log("Speech recognition timed out, restarting...");
-        // Перезапуск распознавания после тайм-аута
-        SpeechManager.stopRecognizing();
-        setTimeout(() => {
-          SpeechManager.startRecognizing();
-        }, 1000); // Небольшая задержка перед перезапуском
-      }
-    };
-
     // Добавляем слушателей для TTS
     TTS.addListener('tts-start', handleTTSStart);
     TTS.addListener('tts-finish', handleTTSFinish);
@@ -174,6 +177,7 @@ useEffect(() => {
     SpeechManager.initialize(handleSpeechResults);
     console.log('SpeechManager initialized');
     SpeechManager.startRecognizing();
+    startListening(); // Запуск перезапуска
     console.log('SpeechManager initialized and started recognizing');
     console.log(`Speaking step: ${steps[currentStepIndex].text}`);
 
@@ -233,6 +237,7 @@ useEffect(() => {
     TTS.removeAllListeners();
     TTS.stop();
     clearInterval(timer);
+    clearTimeout(restartTimeout); // Очищаем таймер перезапуска
     KeepAwake.deactivate();
     SpeechManager.stopRecognizing();
   };
@@ -512,6 +517,12 @@ useEffect(() => {
         return (
           <View style={styles.dictatePage}>
 
+            <Button
+              title="Exit"
+              onPress={handleMissionAbort}
+              color="red"
+            />
+
             {countdown !== null && (
               <Text style={styles.countdown}>{countdown} s</Text>
             )}
@@ -533,11 +544,6 @@ useEffect(() => {
                 <Image source={assets.buttonNext} />
               </TouchableOpacity>
             </View>
-            <Button
-              title="Exit"
-              onPress={handleMissionAbort}
-              color="red"
-            />
           </View>
         );
       case DictatePhase.MissionAccomplished:

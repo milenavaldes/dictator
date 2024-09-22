@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
   },
 
   dictatingTextContainer: {
-    height: '60%',
+    height: '40%',
     width: '100%',
     top: 0,
   },
@@ -112,9 +112,8 @@ const styles = StyleSheet.create({
   dictatingButtonContainer: {
     flexDirection: 'row',
     justifyContent: "space-between",
-    marginTop: 0,
-    marginBottom: 20,
-    width: '100%'
+    width: '100%',
+    marginBottom: '10%'
   },
 
   instructionButtonContainer: {
