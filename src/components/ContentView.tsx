@@ -523,9 +523,9 @@ useEffect(() => {
               color="red"
             />
 
-            {countdown !== null && (
-              <Text style={styles.countdown}>{countdown} s</Text>
-            )}
+          {countdown !== null && steps[currentStepIndex].duration && (
+                  <Text style={styles.countdown}>{countdown} s</Text>
+                )}
             <Text style={styles.dictatingTextContainer}>
               <Text style={styles.stepOfSteps}>Step {currentStepIndex + 1} of {steps.length}</Text>
               {'\n'}
