@@ -6,28 +6,24 @@ interface SpeechRecognitionResult {
 }
 
 const SpeechManager = {
-  isListening: false, // Флаг для отслеживания состояния распознавания
+  isListening: false,  // Флаг для отслеживания активности распознавания речи
+  isTTSActive: false,  // Флаг для отслеживания активности TTS
 
   initialize: (handleSpeechResults: (result: SpeechRecognitionResult) => void) => {
     Voice.onSpeechStart = () => {
       console.log('<SpeechManager> Listening started');
-      SpeechManager.isListening = true; // Обновляем флаг активности распознавания
-    };
-
-    Voice.onSpeechVolumeChanged = () => {
-      // Пустой обработчик, чтобы предотвратить предупреждение
+      SpeechManager.isListening = true;
     };
 
     Voice.onSpeechEnd = () => {
       console.log('<SpeechManager> Listening stopped');
-      SpeechManager.isListening = false; // Сбрасываем флаг активности при завершении
+      SpeechManager.isListening = false;
     };
 
     Voice.onSpeechError = (error: any) => {
       console.error('<SpeechManager> Speech recognition error:', error);
-      SpeechManager.isListening = false; // Сбрасываем флаг активности при ошибке
+      SpeechManager.isListening = false;
 
-      // Обрабатываем ошибку и перезапускаем распознавание речи при необходимости
       if (error?.error?.code === 'recognition_fail' || error?.error?.message === '203/Retry') {
         console.log('Speech recognition failed, attempting restart...');
         SpeechManager.stopRecognizing().then(() => {
@@ -46,33 +42,38 @@ const SpeechManager = {
         handleSpeechResults(result);
       }
     };
+
+    // Пустой обработчик для предотвращения предупреждений
+    Voice.onSpeechVolumeChanged = () => {};
   },
 
   startRecognizing: async () => {
-    if (SpeechManager.isListening) {
-      console.log('<SpeechManager> Speech recognition is already active, skipping start.');
-      return; // Если распознавание уже активно, не запускаем повторно
+    // Проверка: распознавание не должно запускаться, если TTS активен
+    if (SpeechManager.isListening || SpeechManager.isTTSActive) {
+      console.log('<SpeechManager> Speech recognition is already active or TTS is running, skipping start.');
+      return;
     }
 
     try {
       await Voice.start('en-US'); // Запускаем распознавание речи
-      SpeechManager.isListening = true; // Обновляем флаг активности после успешного старта
+      SpeechManager.isListening = true;
       console.log('<SpeechManager> Started recognizing');
     } catch (e) {
       console.error('<SpeechManager> Error starting voice recognition:', e);
-      SpeechManager.isListening = false; // Сбрасываем флаг при ошибке
+      SpeechManager.isListening = false;
     }
   },
 
   stopRecognizing: async () => {
+    // Проверка: остановка только если распознавание активно
     if (!SpeechManager.isListening) {
       console.log('<SpeechManager> Speech recognition is not active, skipping stop.');
-      return; // Если распознавание не активно, не пытаемся его остановить
+      return;
     }
 
     try {
       await Voice.stop(); // Останавливаем распознавание речи
-      SpeechManager.isListening = false; // Обновляем флаг после успешной остановки
+      SpeechManager.isListening = false;
       console.log('<SpeechManager> Stopped recognizing');
     } catch (e) {
       console.error('<SpeechManager> Error stopping voice recognition:', e);
@@ -82,7 +83,8 @@ const SpeechManager = {
   destroy: async () => {
     try {
       await Voice.destroy(); // Полностью удаляем распознавание и его слушатели
-      SpeechManager.isListening = false; // Сбрасываем флаг после удаления
+      SpeechManager.isListening = false;
+      SpeechManager.isTTSActive = false; // Сбрасываем флаг активности TTS
       console.log('<SpeechManager> Destroyed recognition');
     } catch (error) {
       console.error('<SpeechManager> Error destroying recognition:', error);

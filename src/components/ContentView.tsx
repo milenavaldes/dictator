@@ -138,7 +138,7 @@ useEffect(() => {
     // Обработчик старта TTS
     const handleTTSStart = () => {
       console.log('TTS started');
-      SpeechManager.destroy(); // Полностью останавливаем распознавание речи
+      // SpeechManager.destroy(); // Полностью останавливаем распознавание речи
       clearTimeout(restartTimeout); // Очищаем таймер перезапуска
       isListening = false; // Обновляем флаг активности распознавания
       console.log('Speech recognition completely stopped during TTS');
