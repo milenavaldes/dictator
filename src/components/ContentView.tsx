@@ -250,7 +250,7 @@ useEffect(() => {
 
   // Очистка ресурсов при выходе из фазы
   return () => {
-    // SpeechManager.destroy();
+    SpeechManager.destroy();
     console.log('Cleaning up: Removing TTS listeners and stopping TTS');
     TTS.removeAllListeners();
     TTS.stop();
