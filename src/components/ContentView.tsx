@@ -99,10 +99,12 @@ useEffect(() => {
   let timer: NodeJS.Timeout;
   let restartTimeout: NodeJS.Timeout;
   let isRestarting = false; // Флаг для предотвращения частых перезапусков
+  let isListening = false; // Флаг для отслеживания активности распознавания
 
   const startListening = () => {
-    if (!isRestarting) {
+    if (!isRestarting && !isListening) {
       isRestarting = true;
+      console.log('Starting or restarting speech recognition...');
       // Перезапуск распознавания речи через 50 секунд
       restartTimeout = setTimeout(() => {
         console.log('Restarting speech recognition to avoid timeout');
@@ -110,19 +112,23 @@ useEffect(() => {
           // Ожидание завершения всех процессов
           setTimeout(() => {
             SpeechManager.startRecognizing().then(() => {
+              isListening = true; // Обновление флага активности
               isRestarting = false; // Сброс флага после успешного запуска
+              console.log('Speech recognition restarted successfully');
             }).catch((error) => {
               console.error('Error starting recognition:', error);
+              isListening = false;
               isRestarting = false; // Сброс флага даже в случае ошибки
             });
           }, 2000); // Увеличенная задержка между остановкой и запуском
         }).catch((error) => {
           console.error('Error stopping recognition:', error);
+          isListening = false;
           isRestarting = false; // Сброс флага даже в случае ошибки
         });
       }, 50000); // Перезапуск каждые 50 секунд
     } else {
-      console.log('Already restarting, skipping...');
+      console.log('Already restarting or listening, skipping...');
     }
   };
 
@@ -134,6 +140,7 @@ useEffect(() => {
       console.log('TTS started');
       SpeechManager.destroy(); // Полностью останавливаем распознавание речи
       clearTimeout(restartTimeout); // Очищаем таймер перезапуска
+      isListening = false; // Обновляем флаг активности распознавания
       console.log('Speech recognition completely stopped during TTS');
     };
 
@@ -142,9 +149,14 @@ useEffect(() => {
       console.log('TTS finished');
       // Инициализация и запуск распознавания речи после завершения TTS
       SpeechManager.initialize(handleSpeechResults); 
-      SpeechManager.startRecognizing();
-      startListening(); // Запуск перезапуска после завершения TTS
-      console.log('Speech recognition restarted after TTS');
+      SpeechManager.startRecognizing().then(() => {
+        isListening = true; // Устанавливаем флаг активности после успешного старта
+        startListening(); // Запуск таймера перезапуска
+        console.log('Speech recognition restarted after TTS');
+      }).catch((error) => {
+        console.error('Error starting recognition after TTS:', error);
+        isListening = false;
+      });
     };
 
     // Обработчик результатов распознавания речи
@@ -176,9 +188,15 @@ useEffect(() => {
     // Инициализация и запуск распознавания речи
     SpeechManager.initialize(handleSpeechResults);
     console.log('SpeechManager initialized');
-    SpeechManager.startRecognizing();
-    startListening(); // Запуск перезапуска
-    console.log('SpeechManager initialized and started recognizing');
+    SpeechManager.startRecognizing().then(() => {
+      isListening = true; // Устанавливаем флаг активности после успешного старта
+      startListening(); // Запуск перезапуска
+      console.log('SpeechManager initialized and started recognizing');
+    }).catch((error) => {
+      console.error('Error starting recognition:', error);
+      isListening = false;
+    });
+
     console.log(`Speaking step: ${steps[currentStepIndex].text}`);
 
     KeepAwake.activate(); // Оставляем экран активным
@@ -240,8 +258,9 @@ useEffect(() => {
     clearTimeout(restartTimeout); // Очищаем таймер перезапуска
     KeepAwake.deactivate();
     SpeechManager.stopRecognizing();
+    isListening = false; // Сбрасываем флаг активности
   };
-}, [currentStepIndex, dictatePhase, steps]);
+  }, [currentStepIndex, dictatePhase, steps]);
 
   const parseStep = (stepText: string): Step => {
     const match = stepText.match(/\((\d+)\)$/);
@@ -523,9 +542,15 @@ useEffect(() => {
               color="red"
             />
 
+<<<<<<< HEAD
           {countdown !== null && steps[currentStepIndex].duration && (
                   <Text style={styles.countdown}>{countdown} s</Text>
                 )}
+=======
+            {countdown !== null && steps[currentStepIndex].duration && (
+              <Text style={styles.countdown}>{countdown} s</Text>
+            )}
+>>>>>>> f8f900d (bugs onspeachvolume and recornition already started)
             <Text style={styles.dictatingTextContainer}>
               <Text style={styles.stepOfSteps}>Step {currentStepIndex + 1} of {steps.length}</Text>
               {'\n'}
