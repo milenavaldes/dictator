@@ -250,7 +250,7 @@ useEffect(() => {
 
   // Очистка ресурсов при выходе из фазы
   return () => {
-    SpeechManager.destroy();
+    // SpeechManager.destroy();
     console.log('Cleaning up: Removing TTS listeners and stopping TTS');
     TTS.removeAllListeners();
     TTS.stop();
@@ -542,15 +542,9 @@ useEffect(() => {
               color="red"
             />
 
-<<<<<<< HEAD
-          {countdown !== null && steps[currentStepIndex].duration && (
-                  <Text style={styles.countdown}>{countdown} s</Text>
-                )}
-=======
             {countdown !== null && steps[currentStepIndex].duration && (
               <Text style={styles.countdown}>{countdown} s</Text>
             )}
->>>>>>> f8f900d (bugs onspeachvolume and recornition already started)
             <Text style={styles.dictatingTextContainer}>
               <Text style={styles.stepOfSteps}>Step {currentStepIndex + 1} of {steps.length}</Text>
               {'\n'}
